@@ -1,0 +1,4 @@
+train/
+fiqa-passage/collection.tsv
+fiqa-passage/qrels_train.tsv
+fiqa-passage/queries_train.tsv
