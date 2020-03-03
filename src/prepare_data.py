@@ -2,7 +2,6 @@ import pandas as pd
 from pathlib import Path
 import csv
 from itertools import islice
-import nltk
 import pickle
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -11,10 +10,17 @@ import json
 from utils import *
 
 def get_empty_docs(collection):
+    """Returns a list of docids with empty answers and a corresponding list
+    of ids for the documents dataframe.
+    ----------
+    collection: dataframe
+        Dataframe with a column of docid and a column of answer text.
+    """
     empty_docs = []
     empty_id = []
 
     for index, row in collection.iterrows():
+        # If the answer text is empty
         if pd.isna(row['doc']):
             empty_docs.append(row['docid'])
             empty_id.append(index)
@@ -23,39 +29,30 @@ def get_empty_docs(collection):
 
 def label_to_dict(df):
     """
-    Convert dataframe to dictionary
+    Returns a dictionary converted from the labels dataframe which contains the
+    question id and the relevant docids.
+
+    key: question id
+    value: list of relevant docids
+    ----------
+    df: dataframe
+        Dataframe to convert to dictionary
     """
     qid_rel = {}
     for index, row in df.iterrows():
         if row['qid'] not in qid_rel:
+            # Create a list for each unique question
             qid_rel[row['qid']] = []
         qid_rel[row['qid']].append(row['docid'])
 
     return qid_rel
 
-def load_answers_to_dict(path):
-    """
-    dict - docid map to doc text
-    """
-    docs = {}
-
-    with open(path,'r') as f:
-        for line in f:
-            # [qid, doc_id, rank]
-            line = line.strip().split('\t')
-
-            if len(line) == 4:
-                docid = int(line[1])
-                doc = line[2]
-
-                docs[docid] = []
-                docs[docid].append(doc)
-
-    return docs
-
 def load_answers_to_df(path):
     """
-    Returns a dataframe of cols: docid, doc
+    Returns a dataframe of docids and answer text.
+    ----------
+    path: str
+        File path
     """
     # Doc ID to Doc text
     collection = pd.read_csv(path, sep="\t")
@@ -66,7 +63,10 @@ def load_answers_to_df(path):
 
 def load_questions_to_df(path):
     """
-    Returns a dataframe of cols: qid, question
+    Returns a dataframe of question ids and question text.
+    ----------
+    path: str
+        File path
     """
     # Question ID and Question text
     query_df = pd.read_csv(path, sep="\t")
@@ -75,42 +75,68 @@ def load_questions_to_df(path):
     return queries
 
 def load_qid_docid_to_df(path):
+    """Returns a dataframe of question id and relevant docid answers.
+    ----------
+    path: str
+        File path
+    """
     qid_docid = pd.read_csv(path, sep="\t")
     qid_docid = qid_docid [['qid', 'docid']]
 
     return qid_docid
 
 def save_tsv(path, df):
+    """Saves a dataframe to tsv file.
+    ----------
+    path: str
+        File path
+    df: dataframe
+        Dataframe to save
+    """
     with open(path,'w') as write_tsv:
         write_tsv.write(df.to_csv(sep='\t', index=False, header=False))
 
 def collection_to_json(json_path, collection_path):
-    # Convert collection df to JSON file for Anserini's document indexer
+    """Converts a df to JSON file for Anserini's document indexer.
+    ----------
+    json_path: str
+        Output file path
+    collection_path: str
+        Input file path
+    """
     output_jsonl_file = open(json_path, 'w', encoding='utf-8', newline='\n')
 
     with open(collection_path, encoding='utf-8') as f:
         for i, line in enumerate(f):
+            # Extract data
             id_text = line.rstrip().split('\t')
             doc_id, doc_text = id_text[0], id_text[1]
+            # Create dictionary with docid and doc text
             output_dict = {'id': doc_id, 'contents': doc_text}
+            # Dump each docid to json file
             output_jsonl_file.write(json.dumps(output_dict) + '\n')
 
 def split_label(qid_docid):
     """
-    Split question answer pairs into train, test, validation sets
+    Split question answer pairs into train, test, validation sets.
+
+    Returns train, test, and validation dictionaries containing the corresponding
+    question ids and list of relevant docids.
+    ----------
+    qid_docid: dataframe
+        Dataframe containing the question id and relevant answer docids
     """
     # Group the answers for each question into a list
     qid_docid = qid_docid.groupby(['qid']).agg(lambda x: tuple(x)).applymap(list).reset_index()
-
     # Split data
     train, test_set = train_test_split(qid_docid, test_size=0.05)
     train_set, valid_set = train_test_split(train, test_size=0.1)
-
+    # Expand the list of docids into individual rows to represent a single sample
     train_data = train_set.explode('docid')
     test_data = test_set.explode('docid')
     valid_data = valid_set.explode('docid')
 
-    # Convert data into dictionary - key: qd, value: list of relevant docid
+    # Convert data into dictionary - key: qid, value: list of relevant docid
     train_label = label_to_dict(train_data)
     test_label = label_to_dict(test_data)
     valid_label = label_to_dict(valid_data)
@@ -118,6 +144,21 @@ def split_label(qid_docid):
     return train_label, test_label, valid_label
 
 def split_question(train_label, test_label, valid_label, queries):
+    """
+    Split questions into train, test, validation sets.
+
+    Returns train, test, and validation dataframes containing the corresponding
+    question ids.
+    ----------
+    train_label: dictionary
+        Dictionary contraining qid and list of relevant docid
+    test_label: dictionary
+        Dictionary contraining qid and list of relevant docid
+    valid_label: dictionary
+        Dictionary contraining qid and list of relevant docid
+    queries: dataframe
+        Dataframe containing the question id and question text
+    """
     # Get a list of question ids
     train_q = list(train_label.keys())
     test_q = list(test_label.keys())
