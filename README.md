@@ -1,6 +1,7 @@
 ### Generate Training, Validation, Test Samples
 
-```python3 src/generate_dataset.py  [--train_cands TRAIN_CANDS] [--valid_cands VALID_CANDS] [--test_cands TEST_CANDS] [--train_label TRAIN_LABEL] [--valid_label VALID_LABEL] [--test_label TEST_LABEL] [--output_dir OUTPUT_DIR] [--cands_size CANDS_SIZE] [--neg_ans_size NEG_ANS_SIZE]
+```
+python3 src/generate_dataset.py  [--train_cands TRAIN_CANDS] [--valid_cands VALID_CANDS] [--test_cands TEST_CANDS] [--train_label TRAIN_LABEL] [--valid_label VALID_LABEL] [--test_label TEST_LABEL] [--output_dir OUTPUT_DIR] [--cands_size CANDS_SIZE] [--neg_ans_size NEG_ANS_SIZE]
 
 Arguments:
   TRAIN_CANDS - Path to the training candidates data in .tsv format. Each line should have three items: (questiod id, answer id, rank) separated by tab.
