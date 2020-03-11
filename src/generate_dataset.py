@@ -174,25 +174,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-
-    # dir = "/home/bithiah/Documents/Thesis/1_NEW/data/retrieval/"
-    #
-    # train_cands_path = dir + "train/cands_train_500.tsv"
-    # train_qid_rel_path = dir + "train/qid_rel_train.pickle"
-    # train_set_output_path = dir + "train/train_set_50.pickle"
-    #
-    # valid_cands_path = dir + "valid/cands_valid_500.tsv"
-    # valid_qid_rel_path = dir + "valid/qid_rel_valid.pickle"
-    # valid_set_output_path = dir + "valid/valid_set_50.pickle"
-    #
-    # test_cands_path = dir + "test/cands_test_500.tsv"
-    # test_qid_rel_path = dir + "test/qid_rel_test.pickle"
-    # test_set_output_path = dir + "test/test_set_50.pickle"
-    # test_set_full_output_path = dir + "test/test_set_full_50.pickle"
-
-    # cands_size = 500
-    # neg_ans_size = 50
-
     train = get_data(args.train_cands, args.train_label, args.cands_size)
     print("\nCreating train set...\n")
     train_set = train.get_train_valid_set(args.neg_ans_size)
@@ -209,27 +190,8 @@ if __name__ == "__main__":
     print("\nCreating full test set...\n")
     test_set_full = test.get_test_set(full=True)
     print("\nTest sets created.\n")
-    #
-    save_pickle(args.output_dir + "/train_set_50.pickle", train_set)
-    save_pickle(args.output_dir + "/valid_set_50.pickle", valid_set)
-    save_pickle(args.output_dir + "/test_set_50.pickle", test_set)
-    save_pickle(args.output_dir + "/train_set_full_50.pickle", test_set_full)
 
-    # train = get_data(train_cands_path, train_qid_rel_path, cands_size)
-    # print("\nCreating train set...\n")
-    # train_set = train.get_train_valid_set(neg_ans_size)
-    #
-    # valid = get_data(valid_cands_path, valid_qid_rel_path, cands_size)
-    # print("\nCreating validation set...\n")
-    # valid_set = valid.get_train_valid_set(neg_ans_size)
-    #
-    # test = get_data(test_cands_path, test_qid_rel_path, cands_size)
-    # print("\nCreating test set...\n")
-    # test_set = test.get_test_set()
-    # print("\nCreating full test set...\n")
-    # test_set_full = test.get_test_set(full=True)
-    # #
-    # save_pickle(train_set_output_path, train_set)
-    # save_pickle(valid_set_output_path, valid_set)
-    # save_pickle(test_set_output_path, test_set)
-    # save_pickle(test_set_full_output_path, test_set_full)
+    save_pickle(args.output_dir + "/train_set_10.pickle", train_set)
+    save_pickle(args.output_dir + "/valid_set_10.pickle", valid_set)
+    save_pickle(args.output_dir + "/test_set_10.pickle", test_set)
+    save_pickle(args.output_dir + "/train_set_full_10.pickle", test_set_full)
