@@ -191,7 +191,9 @@ if __name__ == "__main__":
     test_set_full = test.get_test_set(full=True)
     print("\nTest sets created.\n")
 
-    save_pickle(args.output_dir + "/train_set_10.pickle", train_set)
-    save_pickle(args.output_dir + "/valid_set_10.pickle", valid_set)
-    save_pickle(args.output_dir + "/test_set_10.pickle", test_set)
-    save_pickle(args.output_dir + "/train_set_full_10.pickle", test_set_full)
+    neg_size = str(args.neg_ans_size)
+
+    save_pickle(args.output_dir + "/train_set_" + neg_size + ".pickle", train_set)
+    save_pickle(args.output_dir + "/valid_set_" + neg_size + ".pickle", valid_set)
+    save_pickle(args.output_dir + "/test_set_" + neg_size + ".pickle", test_set)
+    save_pickle(args.output_dir + "/test_set_full_" + neg_size + ".pickle", test_set_full)
