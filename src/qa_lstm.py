@@ -22,7 +22,7 @@ from .utils import *
 # config = {
 #     'emb_dim': 100,
 #     'hidden_size': 256,
-#     'drop_out': 0.2,
+#     'dropout': 0.2,
 #     'max_seq_len': 512,
 #     'batch_size': 64,
 #     'n_epochs': 6,
@@ -47,7 +47,7 @@ class QA_LSTM():
         self.train_set = config['train_set']
         self.valid_set = config['valid_set']
         self.vocab  = config['vocab']
-        self.vocab_size = len(vocab)
+        self.vocab_size = len(self.vocab)
         self.qid_to_tokenized_text = config['qid_to_tokenized_text']
         self.docid_to_tokenized_text = config['docid_to_tokenized_text']
 
