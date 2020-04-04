@@ -39,10 +39,10 @@ class QA_LSTM():
         self.n_epochs = config['n_epochs']
         self.train_set = config['train_set']
         self.valid_set = config['valid_set']
-        self.vocab  = load_pickle('../qa_lstm_tokenizer/word2index.pickle')
+        self.vocab  = load_pickle('../data/qa_lstm_tokenizer/word2index.pickle')
         self.vocab_size = len(vocab)
-        self.qid_to_tokenized_text = load_pickle('../qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
-        self.docid_to_tokenized_text = load_pickle('../qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
+        self.qid_to_tokenized_text = load_pickle('../data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
+        self.docid_to_tokenized_text = load_pickle('../data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
 
         # Shape - (max_seq_len, emb_dim)
         self.embedding = create_emb_layer()
