@@ -209,7 +209,7 @@ class train_model():
         self.device = config['device']
         self.model = model.to(self.device)
         self.optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
-        self.n_epochs config['n_epochs']
+        self.n_epochs = config['n_epochs']
 
         # Lowest validation lost
         best_valid_loss = float('inf')
