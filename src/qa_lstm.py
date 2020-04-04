@@ -11,22 +11,22 @@ from tqdm import tqdm
 
 from utils import *
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-train_set = load_pickle(path + '../data/train_set_50.pickle')
-valid_set = load_pickle(path + '../data/valid_set_50.pickle')
-
-config = {
-    'emb_dim': 100,
-    'hidden_size': 256,
-    'drop_out': 0.2,
-    'max_seq_len': 512,
-    'batch_size': 64,
-    'n_epochs': 6,
-    'learning_rate': 0.001,
-    'device': device,
-    'train_set': train_set,
-    'valid_set': valid_set
-}
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# train_set = load_pickle(path + '../data/train_set_50.pickle')
+# valid_set = load_pickle(path + '../data/valid_set_50.pickle')
+#
+# config = {
+#     'emb_dim': 100,
+#     'hidden_size': 256,
+#     'drop_out': 0.2,
+#     'max_seq_len': 512,
+#     'batch_size': 64,
+#     'n_epochs': 6,
+#     'learning_rate': 0.001,
+#     'device': device,
+#     'train_set': train_set,
+#     'valid_set': valid_set
+# }
 
 class QA_LSTM():
     def __init__(self, config):
