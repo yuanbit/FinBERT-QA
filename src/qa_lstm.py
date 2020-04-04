@@ -14,6 +14,10 @@ from .utils import *
 # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # train_set = load_pickle(path + '../data/train_set_50.pickle')
 # valid_set = load_pickle(path + '../data/valid_set_50.pickle')
+
+# vocab = load_pickle('fiqa/data/qa_lstm_tokenizer/word2index.pickle')
+# qid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
+# docid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
 #
 # config = {
 #     'emb_dim': 100,
@@ -24,6 +28,9 @@ from .utils import *
 #     'n_epochs': 6,
 #     'learning_rate': 0.001,
 #     'device': device,
+#     'vocab': vocab,
+#     'qid_to_tokenized_text': qid_to_tokenized_text,
+#     'docid_to_tokenized_text': docid_to_tokenized_text,
 #     'train_set': train_set,
 #     'valid_set': valid_set
 # }
@@ -39,10 +46,10 @@ class QA_LSTM():
         self.n_epochs = config['n_epochs']
         self.train_set = config['train_set']
         self.valid_set = config['valid_set']
-        self.vocab  = load_pickle('../data/qa_lstm_tokenizer/word2index.pickle')
+        self.vocab  = config['vocab']
         self.vocab_size = len(vocab)
-        self.qid_to_tokenized_text = load_pickle('../data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
-        self.docid_to_tokenized_text = load_pickle('../data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
+        self.qid_to_tokenized_text = config['qid_to_tokenized_text']
+        self.docid_to_tokenized_text = config['docid_to_tokenized_text']
 
         # Shape - (max_seq_len, emb_dim)
         self.embedding = create_emb_layer()
