@@ -9,7 +9,7 @@ import torchtext
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from tqdm import tqdm
 
-from utils import *
+from .utils import *
 
 # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # train_set = load_pickle(path + '../data/train_set_50.pickle')
