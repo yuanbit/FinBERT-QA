@@ -33,7 +33,7 @@ class QA_LSTM():
         super(QA_LSTM, self).__init__()
         self.emb_dim = config['emb_dim']
         self.hidden_size = config['hidden_size']
-        self.drop_out = config['dropout']
+        self.dropout = config['dropout']
         self.max_seq_len = config['max_seq_len']
         self.batch_size = config['batch_size']
         self.n_epochs = config['n_epochs']
