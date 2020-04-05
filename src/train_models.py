@@ -3,15 +3,21 @@ import argparse
 def main():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("--train_pickle", default=None, type=str, required=True,
+    help="Path to training data in .pickle format")
+    parser.add_argument("--valid_pickle", default=None, type=str, required=True,
+    help="Path to validation data in .pickle format")
+
     parser.add_argument("--device", default='gpu', type=str, required=False,
     help="Use GPU or CPU")
 
     args = parser.parse_args()
 
+    train_set = load_pickle(args.train_pickle)
+    valid_set = load_pickle(args.valid_pickle)
     device = torch.device('cuda' if args.device == 'gpu' else 'cpu')
 
-train_set = load_pickle('fiqa/data/data_50/train_set_50.pickle')
-valid_set = load_pickle('fiqa/data/data_50/valid_set_50.pickle')
+
 
 vocab = load_pickle('fiqa/data/qa_lstm_tokenizer/word2index.pickle')
 qid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
