@@ -128,7 +128,7 @@ class train_qa_lstm_model():
             seq += [0]*(self.max_seq_len - len(seq))
         return seq
 
-    def vectorize(seq, vocab):
+    def vectorize(self, seq):
         # Map tokens in seq to idx
         seq_idx = [vocab[token] for token in seq]
         # Pad seq idx
