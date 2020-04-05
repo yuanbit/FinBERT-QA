@@ -19,7 +19,7 @@ docid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/docid_to_toke
 train_set = load_pickle('fiqa/data/processed_data/train_set_50.pickle')
 valid_set = load_pickle('fiqa/data/processed_data/valid_set_50.pickle')
 
-class QA_LSTM():
+class QA_LSTM(nn.Module):
     def __init__(self, config):
         super(QA_LSTM, self).__init__()
         self.emb_dim = config['emb_dim']
