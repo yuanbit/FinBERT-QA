@@ -12,12 +12,12 @@ from tqdm import tqdm
 
 from .utils import *
 
-vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
-qid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
-docid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
+vocab = load_pickle("fiqa/data/qa_lstm_tokenizer/word2index.pickle")
+qid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
+docid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
 
-train_set = load_pickle('../fiqa/data/processed_data/train_set_50.pickle')
-valid_set = load_pickle('../fiqa/data/processed_data/valid_set_50.pickle')
+train_set = load_pickle('fiqa/data/processed_data/train_set_50.pickle')
+valid_set = load_pickle('fiqa/data/processed_data/valid_set_50.pickle')
 
 class QA_LSTM():
     def __init__(self, config):
