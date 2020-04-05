@@ -119,20 +119,20 @@ class train_qa_lstm_model():
 
         return loss
 
-    def pad_seq(self, seq):
+    def pad_seq(self, seq_idx):
         # Pad each seq to be the same length to process in batch.
         # pad_token = 0
-        if len(seq) >= self.max_seq_len:
-            seq = seq[:max_seq_len]
+        if len(seq_idx) >= self.max_seq_len:
+            seq_idx = seq_idx[:self.max_seq_len]
         else:
-            seq += [0]*(self.max_seq_len - len(seq))
-        return seq
+            seq_idx += [0]*(self.max_seq_len - len(seq_idx))
+        return seq_idx
 
     def vectorize(self, seq):
         # Map tokens in seq to idx
         seq_idx = [vocab[token] for token in seq]
         # Pad seq idx
-        padded_seq_idx = pad_seq(seq_idx, self.max_seq_len)
+        padded_seq_idx = self.pad_seq(seq_idx)
 
         return padded_seq_idx
 
