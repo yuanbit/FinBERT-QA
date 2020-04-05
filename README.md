@@ -24,7 +24,7 @@ Arguments:
 ```
 python3 src/train_models.py --train_pickle data/processed_data/train_set_50.pickle \
 --valid_pickle data/processed_data/valid_set_50.pickle --model_type 'qa_lstm' \
---max_seq_len 128 --batch_size 64 --n_epochs 1 --lr 0.001
+--max_seq_len 128 --batch_size 64 --n_epochs 3 --lr 0.001
 ```
 
 ## Generate Training, Validation, Test Samples
