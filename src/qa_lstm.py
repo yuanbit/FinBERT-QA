@@ -106,7 +106,7 @@ class train_qa_lstm_model():
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
                 # Save the parameters of the model
-                torch.save(model.state_dict(), '../model/'+str(epoch+1)+'_qa_lstm.pt')
+                torch.save(model.state_dict(), 'fiqa/model/'+str(epoch+1)+'_qa_lstm.pt')
 
             print("\n\n Epoch {}:".format(epoch+1))
             print("\t Train Loss: {}".format(round(train_loss, 3)))
