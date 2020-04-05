@@ -48,6 +48,7 @@ class QA_LSTM(nn.Module):
                 emb_weights[idx] = emb[token]
                 words_found += 1
 
+        print("\n")
         print(words_found, "words are found in GloVe\n")
         # Convert numpy matrix to tensor
         emb_weights = torch.from_numpy(emb_weights).float()
@@ -88,7 +89,7 @@ class train_qa_lstm_model():
         self.train_set = load_pickle(config['train_set'])
         self.valid_set = load_pickle(config['valid_set'])
         model = QA_LSTM(self.config).to(self.device)
-        optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
+        optimizer = optim.Adam(model.parameters(), lr=config['lr'])
         # Lowest validation lost
         best_valid_loss = float('inf')
         print("\nGenerating training and validation data...\n")
