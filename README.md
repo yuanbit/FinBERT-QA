@@ -19,9 +19,9 @@ Arguments:
 ```
 #### Example
 ```
-python3 src/generate_dataset.py --train_cands data/train/cands_train_500.tsv \
---valid_cands data/valid/cands_valid_500.tsv --test_cands data/test/cands_test_500.tsv \
---train_label data/train/qid_rel_train.pickle --valid_label data/valid/qid_rel_valid.pickle \
---test_label data/test/qid_rel_test.pickle --output_dir data/processed \
+python3 src/generate_dataset.py --train_cands data/retrieval/train/cands_train_50.tsv \
+--valid_cands data/retrieval/valid/cands_valid_50.tsv --test_cands data/retrieval/test/cands_test_50.tsv \
+--train_label data/labels/qid_rel_train.pickle --valid_label data/labels/qid_rel_valid.pickle \
+--test_label data/labels/qid_rel_test.pickle --output_dir data/processed \
 --cands_size 50
 ```
