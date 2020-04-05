@@ -11,30 +11,6 @@ from tqdm import tqdm
 
 from .utils import *
 
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# train_set = load_pickle(path + '../data/train_set_50.pickle')
-# valid_set = load_pickle(path + '../data/valid_set_50.pickle')
-
-# vocab = load_pickle('fiqa/data/qa_lstm_tokenizer/word2index.pickle')
-# qid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
-# docid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
-#
-# config = {
-#     'emb_dim': 100,
-#     'hidden_size': 256,
-#     'dropout': 0.2,
-#     'max_seq_len': 512,
-#     'batch_size': 64,
-#     'n_epochs': 6,
-#     'learning_rate': 0.001,
-#     'device': device,
-#     'vocab': vocab,
-#     'qid_to_tokenized_text': qid_to_tokenized_text,
-#     'docid_to_tokenized_text': docid_to_tokenized_text,
-#     'train_set': train_set,
-#     'valid_set': valid_set
-# }
-
 class QA_LSTM():
     def __init__(self, config):
         super(QA_LSTM, self).__init__()
@@ -52,7 +28,7 @@ class QA_LSTM():
         self.docid_to_tokenized_text = config['docid_to_tokenized_text']
 
         # Shape - (max_seq_len, emb_dim)
-        self.embedding = create_emb_layer()
+        self.embedding = self.create_emb_layer()
 
         self.shared_lstm = nn.LSTM(self.emb_dim, \
                                    self.hidden_size, \
@@ -139,21 +115,24 @@ class QA_LSTM():
         return q_input_ids, pos_input_ids, neg_input_ids
 
     def get_dataloader(self):
-        train_q_input, train_pos_input, train_neg_input = get_lstm_input_data(self.train_set)
-        valid_q_input, valid_pos_input, valid_neg_input = get_lstm_input_data(self.valid_set)
+        print("Generating training data...\n")
+        train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(self.train_set)
 
         train_q_inputs = torch.tensor(train_q_input)
         train_pos_inputs = torch.tensor(train_pos_input)
         train_neg_inputs = torch.tensor(train_neg_input)
 
-        valid_q_inputs = torch.tensor(valid_q_input)
-        valid_pos_inputs = torch.tensor(valid_pos_input)
-        valid_neg_inputs = torch.tensor(valid_neg_input)
-
         # Create the DataLoader for our training set.
         train_data = TensorDataset(train_q_inputs, train_pos_inputs, train_neg_inputs)
         train_sampler = RandomSampler(train_data)
         self.train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
+
+        print("Generating validation data...\n")
+        valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(self.valid_set)
+
+        valid_q_inputs = torch.tensor(valid_q_input)
+        valid_pos_inputs = torch.tensor(valid_pos_input)
+        valid_neg_inputs = torch.tensor(valid_neg_input)
 
         # Create the DataLoader for our validation set.
         validation_data = TensorDataset(valid_q_inputs, valid_pos_inputs, valid_neg_inputs)
@@ -209,15 +188,14 @@ class QA_LSTM():
 
         return avg_loss
 
-class train_model():
+class train_qa_lstm_model():
     def __init__(self, config):
         self.config = config
-        self.model = QA_LSTM(self.config)
         self.device = config['device']
-        self.model = model.to(self.device)
-        self.optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
         self.n_epochs = config['n_epochs']
-
+        self.model = QA_LSTM(self.config)
+        self.optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
+        self.model = model.to(self.device)
         # Lowest validation lost
         best_valid_loss = float('inf')
 
