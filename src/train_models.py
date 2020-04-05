@@ -7,7 +7,8 @@ def main():
     help="Path to training data in .pickle format")
     parser.add_argument("--valid_pickle", default=None, type=str, required=True,
     help="Path to validation data in .pickle format")
-
+    parser.add_argument("--model_type", default=None, type=str, required=True,
+    help="Specify model type as 'qa_lstm' or 'bert'")
     parser.add_argument("--device", default='gpu', type=str, required=False,
     help="Use GPU or CPU")
 
@@ -17,7 +18,7 @@ def main():
     valid_set = load_pickle(args.valid_pickle)
     device = torch.device('cuda' if args.device == 'gpu' else 'cpu')
 
-
+    if args.model_type == 'qa_lstm'
 
 vocab = load_pickle('fiqa/data/qa_lstm_tokenizer/word2index.pickle')
 qid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
