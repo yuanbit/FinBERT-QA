@@ -1,56 +1,60 @@
 import argparse
-import os
 
 from utils import *
+from qa_lstm import *
 
 def main():
+    parser = argparse.ArgumentParser()
 
-    # os.chdir("../fiqa/data/qa_lstm_tokenizer/")
-    vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
-    # os.chdir("../../../fiqa/data/processed_data/")
-    train_set = load_pickle('../fiqa/data/processed_data/train_set_50.pickle')
+    parser.add_argument("--train_pickle", default=None, type=str, required=True,
+    help="Path to training data in .pickle format")
+    parser.add_argument("--valid_pickle", default=None, type=str, required=True,
+    help="Path to validation data in .pickle format")
+    parser.add_argument("--model_type", default=None, type=str, required=True,
+    help="Specify model type as 'qa_lstm' or 'bert'")
 
-    # parser = argparse.ArgumentParser()
-    #
-    # parser.add_argument("--train_pickle", default=None, type=str, required=True,
-    # help="Path to training data in .pickle format")
-    # parser.add_argument("--valid_pickle", default=None, type=str, required=True,
-    # help="Path to validation data in .pickle format")
-    # parser.add_argument("--model_type", default=None, type=str, required=True,
-    # help="Specify model type as 'qa_lstm' or 'bert'")
-    # parser.add_argument("--device", default='gpu', type=str, required=False,
-    # help="Use GPU or CPU")
-    #
-    # args = parser.parse_args()
-    #
-    # train_set = load_pickle(args.train_pickle)
-    # valid_set = load_pickle(args.valid_pickle)
-    # device = torch.device('cuda' if args.device == 'gpu' else 'cpu')
-    #
-    # if args.model_type == 'qa_lstm'
-    #     os.chdir("../fiqa/data/qa_lstm_tokenizer/")
-    #     vocab = load_pickle("word2index.pickle")
-    #     qid_to_tokenized_text = load_pickle('qid_to_tokenized_text.pickle')
-    #     docid_to_tokenized_text = load_pickle('docid_to_tokenized_text.pickle')
+    parser.add_argument("--device", default='gpu', type=str, required=False,
+    help="Use GPU or CPU")
+    parser.add_argument("--max_seq_len", default=512, type=int, required=False,
+    help="Maximum sequence length for a given input.")
+    parser.add_argument("--batch_size", default=16, type=int, required=False,
+    help="Batch size.")
+    parser.add_argument("--n_epochs", default=3, type=int, required=False,
+    help="Number of epochs.")
+    parser.add_argument("--lr", default=3e-6, type=float, required=False,
+    help="Number of epochs.")
+
+    parser.add_argument("--emb_dim", default=100, type=int, required=False,
+    help="Embedding dimension. Specify only if model type is 'qa_lstm'")
+    parser.add_argument("--hidden_size", default=256, type=int, required=False,
+    help="Hidden size. Specify only if model type is 'qa_lstm'")
+    parser.add_argument("--dropout", default=0.2, type=float, required=False,
+    help="Dropout rate. Specify only if model type is 'qa_lstm'")
 
 
-#
-# config = {
-#     'model_type': "qa_lstm",
-#     'emb_dim': 100,
-#     'hidden_size': 256,
-#     'dropout': 0.2,
-#     'max_seq_len': 512,
-#     'batch_size': 64,
-#     'n_epochs': 6,
-#     'learning_rate': 0.001,
-#     'device': device,
-#     'vocab': vocab,
-#     'qid_to_tokenized_text': qid_to_tokenized_text,
-#     'docid_to_tokenized_text': docid_to_tokenized_text,
-#     'train_set': train_set,
-#     'valid_set': valid_set
-# }
+    args = parser.parse_args()
+
+    train_set = load_pickle(args.train_pickle)
+    valid_set = load_pickle(args.valid_pickle)
+    device = torch.device('cuda' if args.device == 'gpu' else 'cpu')
+
+
+    config = {
+        'model_type': args.model_type,
+        'device': args.device,
+        'max_seq_len': args.max_seq_len,
+        'batch_size': args.batch_size,
+        'n_epochs': args.n_epochs,
+        'lr': args.lr,
+        'emb_dim': args.emb_dim,
+        'hidden_size': args.hidden_size,
+        'dropout': args.dropout,
+    }
+
+    if config['model_type'] == 'qa_lstm':
+        train_qa_lstm_model(config)
+    else:
+        pass
 
 if __name__ == "__main__":
     main()

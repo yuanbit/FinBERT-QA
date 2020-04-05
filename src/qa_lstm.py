@@ -10,14 +10,14 @@ import torchtext
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from tqdm import tqdm
 
-from .utils import *
+from utils import *
 
-vocab = load_pickle("fiqa/data/qa_lstm_tokenizer/word2index.pickle")
-qid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
-docid_to_tokenized_text = load_pickle('fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
+vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
+qid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
+docid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
 
-train_set = load_pickle('fiqa/data/processed_data/train_set_50.pickle')
-valid_set = load_pickle('fiqa/data/processed_data/valid_set_50.pickle')
+train_set = load_pickle('../fiqa/data/processed_data/train_set_50.pickle')
+valid_set = load_pickle('../fiqa/data/processed_data/valid_set_50.pickle')
 
 class QA_LSTM(nn.Module):
     def __init__(self, config):
@@ -92,14 +92,15 @@ class train_qa_lstm_model():
         optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
         # Lowest validation lost
         best_valid_loss = float('inf')
+        print("\nGenerating training and validation data...\n")
         train_dataloader, validation_dataloader = self.get_dataloader()
+
+        print("\nTraining model...\n")
 
         for epoch in range(self.n_epochs):
             # Evaluate training loss
-            print("Training model...\n")
             train_loss = self.train(model, train_dataloader, optimizer)
             # Evaluate validation loss
-            print("Validating...\n")
             valid_loss = self.validate(model, validation_dataloader)
 
             # At each epoch, if the validation loss is the best
@@ -168,7 +169,6 @@ class train_qa_lstm_model():
         return q_input_ids, pos_input_ids, neg_input_ids
 
     def get_dataloader(self):
-        print("\nGenerating training data...\n")
         train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(train_set)
 
         train_q_inputs = torch.tensor(train_q_input)
@@ -180,7 +180,6 @@ class train_qa_lstm_model():
         train_sampler = RandomSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
 
-        print("\nGenerating validation data...\n")
         valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(valid_set)
 
         valid_q_inputs = torch.tensor(valid_q_input)
