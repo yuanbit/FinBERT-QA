@@ -1,6 +1,6 @@
 import argparse
 
-from utils import *
+from helper.utils import *
 from qa_lstm import *
 
 def main():
@@ -14,7 +14,7 @@ def main():
     help="Specify model type as 'qa_lstm' or 'bert'")
 
     parser.add_argument("--device", default='gpu', type=str, required=False,
-    help="Use GPU or CPU")
+    help="Specify 'gpu' or 'cpu'")
     parser.add_argument("--max_seq_len", default=512, type=int, required=False,
     help="Maximum sequence length for a given input.")
     parser.add_argument("--batch_size", default=16, type=int, required=False,

@@ -10,7 +10,7 @@ import torchtext
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from tqdm import tqdm
 
-from utils import *
+from helper.utils import *
 
 vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
 qid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
@@ -219,7 +219,7 @@ class train_qa_lstm_model():
         avg_loss = train_loss/len(train_dataloader)
         return avg_loss
 
-    def validate(model, validation_dataloader):
+    def validate(self, model, validation_dataloader):
         # Cumulated Training loss
         valid_loss = 0.0
         # Set model to evaluation mode

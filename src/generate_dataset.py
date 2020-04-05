@@ -3,7 +3,7 @@ from tqdm import tqdm
 import random
 import math
 
-from utils import *
+from helper.utils import *
 
 class get_data:
     def __init__(self, cands_path, qid_rel_path, cands_size):
