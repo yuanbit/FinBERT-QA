@@ -88,19 +88,19 @@ class train_qa_lstm_model():
         self.max_seq_len = config['max_seq_len']
         self.batch_size = config['batch_size']
         self.n_epochs = config['n_epochs']
-        self.model = QA_LSTM(self.config)
-        self.model = self.model.to(self.device)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=config['learning_rate'])
+        model = QA_LSTM(self.config).to(self.device)
+        optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
         # Lowest validation lost
         best_valid_loss = float('inf')
+        train_dataloader, validation_dataloader = get_dataloader()
 
         for epoch in range(self.n_epochs):
             # Evaluate training loss
             print("Training model...\n")
-            train_loss = self.train(self.model, self.optimizer)
+            train_loss = self.train(model, train_dataloader, optimizer)
             # Evaluate validation loss
             print("Validating...\n")
-            valid_loss = self.validate(self.model)
+            valid_loss = self.validate(model, validation_dataloader)
 
             # At each epoch, if the validation loss is the best
             if valid_loss < best_valid_loss:
@@ -161,7 +161,7 @@ class train_qa_lstm_model():
         # Create the DataLoader for our training set.
         train_data = TensorDataset(train_q_inputs, train_pos_inputs, train_neg_inputs)
         train_sampler = RandomSampler(train_data)
-        self.train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
+        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
 
         print("Generating validation data...\n")
         valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(valid_set)
@@ -173,17 +173,17 @@ class train_qa_lstm_model():
         # Create the DataLoader for our validation set.
         validation_data = TensorDataset(valid_q_inputs, valid_pos_inputs, valid_neg_inputs)
         validation_sampler = SequentialSampler(validation_data)
-        self.validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=self.batch_size)
+        validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=self.batch_size)
 
-        return self.train_dataloader, self.validation_dataloader
+        return train_dataloader, validation_dataloader
 
-    def train(self, model, optimizer):
+    def train(self, model, train_dataloader, optimizer):
         # Cumulated Training loss
         train_loss = 0.0
         # Set model to training mode
         model.train()
         # For each batch of training data...
-        for step, batch in enumerate(tqdm(self.train_dataloader)):
+        for step, batch in enumerate(tqdm(train_dataloader)):
             # batch contains eight PyTorch tensors:
             question = batch[0].to(device)
             pos_ans = batch[1].to(device)
@@ -200,16 +200,16 @@ class train_qa_lstm_model():
             # 5. Use optimizer to take gradient step
             optimizer.step()
             train_loss += loss.item()
-        avg_loss = train_loss/len(self.train_dataloader)
+        avg_loss = train_loss/len(train_dataloader)
         return avg_loss
 
-    def validate(model):
+    def validate(model, validation_dataloader):
         # Cumulated Training loss
         valid_loss = 0.0
         # Set model to evaluation mode
         model.eval()
         # Evaluate data for one epoch
-        for batch in tqdm(self.validation_dataloader):
+        for batch in tqdm(validation_dataloader):
             # Add batch to GPU
             batch = tuple(t.to(device) for t in batch)
             # Unpack the inputs from our dataloader
@@ -220,6 +220,6 @@ class train_qa_lstm_model():
                 neg_sim = model(question, neg_ans)
                 loss = self.hinge_loss(pos_sim, neg_sim).mean()
                 valid_loss += loss.item()
-        avg_loss = valid_loss/len(self.validation_dataloader)
+        avg_loss = valid_loss/len(validation_dataloader)
 
         return avg_loss
