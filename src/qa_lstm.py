@@ -86,7 +86,7 @@ class train_qa_lstm_model():
         self.batch_size = config['batch_size']
         self.n_epochs = config['n_epochs']
         self.train_set = load_pickle(config['train_set'])
-        self.valid_set = load_pickle(config['valid_test'])
+        self.valid_set = load_pickle(config['valid_set'])
         model = QA_LSTM(self.config).to(self.device)
         optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
         # Lowest validation lost
