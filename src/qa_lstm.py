@@ -45,7 +45,7 @@ class QA_LSTM():
         emb_weights = np.zeros((self.vocab_size, self.emb_dim))
         words_found = 0
 
-        for token, idx in self.vocab.items():
+        for token, idx in vocab.items():
             # emb.stoi is a dict of token to idx mapping
             if token in emb.stoi:
                 emb_weights[idx] = emb[token]
@@ -84,7 +84,7 @@ class QA_LSTM():
 class train_qa_lstm_model():
     def __init__(self, config):
         self.config = config
-        self.device = config['device']
+        self.device = device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         self.max_seq_len = config['max_seq_len']
         self.batch_size = config['batch_size']
         self.n_epochs = config['n_epochs']
