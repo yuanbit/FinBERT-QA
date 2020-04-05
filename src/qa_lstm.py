@@ -199,7 +199,7 @@ class train_qa_lstm_model():
         self.device = config['device']
         self.n_epochs = config['n_epochs']
         self.model = QA_LSTM(self.config)
-        self.model = self.model.to(self.device)
+        self.model = self.model.cuda()
         self.optimizer = optim.Adam(self.model.parameters(), lr=config['learning_rate'])
         # Lowest validation lost
         best_valid_loss = float('inf')
