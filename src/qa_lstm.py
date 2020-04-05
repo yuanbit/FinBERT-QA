@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import random
 import torch
@@ -11,21 +12,22 @@ from tqdm import tqdm
 
 from .utils import *
 
+os.chdir("../fiqa/data/qa_lstm_tokenizer/")
+vocab = load_pickle("word2index.pickle")
+qid_to_tokenized_text = load_pickle('qid_to_tokenized_text.pickle')
+docid_to_tokenized_text = load_pickle('docid_to_tokenized_text.pickle')
+
+os.chdir("../../../fiqa/data/processed_data/")
+train_set = load_pickle('train_set_50.pickle')
+valid_set = load_pickle('valid_set_50.pickle')
+
 class QA_LSTM():
     def __init__(self, config):
         super(QA_LSTM, self).__init__()
         self.emb_dim = config['emb_dim']
         self.hidden_size = config['hidden_size']
         self.dropout = config['dropout']
-        self.max_seq_len = config['max_seq_len']
-        self.batch_size = config['batch_size']
-        self.n_epochs = config['n_epochs']
-        self.train_set = config['train_set']
-        self.valid_set = config['valid_set']
-        self.vocab  = config['vocab']
-        self.vocab_size = len(self.vocab)
-        self.qid_to_tokenized_text = config['qid_to_tokenized_text']
-        self.docid_to_tokenized_text = config['docid_to_tokenized_text']
+        self.vocab_size = len(vocab)
 
         # Shape - (max_seq_len, emb_dim)
         self.embedding = self.create_emb_layer()
@@ -51,7 +53,7 @@ class QA_LSTM():
                 emb_weights[idx] = emb[token]
                 words_found += 1
 
-        print(words_found, " words are found in GloVe\n")
+        print(words_found, "words are found in GloVe\n")
         # Convert numpy matrix to tensor
         emb_weights = torch.from_numpy(emb_weights).float()
 
@@ -81,10 +83,41 @@ class QA_LSTM():
 
         return self.cos(q, a) # (bs,)
 
+class train_qa_lstm_model():
+    def __init__(self, config):
+        self.config = config
+        self.device = config['device']
+        self.max_seq_len = config['max_seq_len']
+        self.batch_size = config['batch_size']
+        self.n_epochs = config['n_epochs']
+        self.model = QA_LSTM(self.config)
+        self.model = self.model.to(self.device)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=config['learning_rate'])
+        # Lowest validation lost
+        best_valid_loss = float('inf')
+
+        for epoch in range(self.n_epochs):
+            # Evaluate training loss
+            print("Training model...\n")
+            train_loss = QA_LSTM.train(self.model, self.optimizer)
+            # Evaluate validation loss
+            print("Validating...\n")
+            valid_loss = QA_LSTM.validate(self.model)
+
+            # At each epoch, if the validation loss is the best
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
+                # Save the parameters of the model
+                torch.save(model.state_dict(), '../model/'+str(epoch+1)+'_qa_lstm.pt')
+
+            print("\n\n Epoch {}:".format(epoch+1))
+            print("\t Train Loss: {}".format(round(train_loss, 3)))
+            print("\t Validation Loss: {}\n".format(round(valid_loss, 3)))
+
     def hinge_loss(self, pos_sim, neg_sim):
         margin = 0.2
 
-        loss = torch.max(torch.tensor(0, dtype=torch.float).to(device), margin - pos_sim + neg_sim)
+        loss = torch.max(torch.tensor(0, dtype=torch.float).to(self.device), margin - pos_sim + neg_sim)
 
         return loss
 
@@ -101,14 +134,14 @@ class QA_LSTM():
             pos_docid = random.choice(ans_labels)
 
             # Map question id to text
-            q_text = self.qid_to_tokenized_text[qid]
+            q_text = qid_to_tokenized_text[qid]
             q_input_id = self.vectorize(q_text)
 
             for neg_docid in filtered_cands:
 
                 # Map the docid to text
-                pos_ans_text = self.docid_to_tokenized_text[pos_docid]
-                neg_ans_text = self.docid_to_tokenized_text[neg_docid]
+                pos_ans_text = docid_to_tokenized_text[pos_docid]
+                neg_ans_text = docid_to_tokenized_text[neg_docid]
 
                 pos_input_id = self.vectorize(pos_ans_text)
                 neg_input_id = self.vectorize(neg_ans_text)
@@ -121,7 +154,7 @@ class QA_LSTM():
 
     def get_dataloader(self):
         print("Generating training data...\n")
-        train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(self.train_set)
+        train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(train_set)
 
         train_q_inputs = torch.tensor(train_q_input)
         train_pos_inputs = torch.tensor(train_pos_input)
@@ -133,7 +166,7 @@ class QA_LSTM():
         self.train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
 
         print("Generating validation data...\n")
-        valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(self.valid_set)
+        valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(valid_set)
 
         valid_q_inputs = torch.tensor(valid_q_input)
         valid_pos_inputs = torch.tensor(valid_pos_input)
@@ -192,32 +225,3 @@ class QA_LSTM():
         avg_loss = valid_loss/len(self.validation_dataloader)
 
         return avg_loss
-
-class train_qa_lstm_model():
-    def __init__(self, config):
-        self.config = config
-        self.device = config['device']
-        self.n_epochs = config['n_epochs']
-        self.model = QA_LSTM(self.config)
-        self.model = self.model.cuda()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=config['learning_rate'])
-        # Lowest validation lost
-        best_valid_loss = float('inf')
-
-        for epoch in range(self.n_epochs):
-            # Evaluate training loss
-            print("Training model...\n")
-            train_loss = QA_LSTM.train(self.model, self.optimizer)
-            # Evaluate validation loss
-            print("Validating...\n")
-            valid_loss = QA_LSTM.validate(self.model)
-
-            # At each epoch, if the validation loss is the best
-            if valid_loss < best_valid_loss:
-                best_valid_loss = valid_loss
-                # Save the parameters of the model
-                torch.save(model.state_dict(), '../model/'+str(epoch+1)+'_qa_lstm.pt')
-
-            print("\n\n Epoch {}:".format(epoch+1))
-            print("\t Train Loss: {}".format(round(train_loss, 3)))
-            print("\t Validation Loss: {}\n".format(round(valid_loss, 3)))

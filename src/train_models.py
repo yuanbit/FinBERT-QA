@@ -5,28 +5,35 @@ from utils import *
 
 def main():
 
-    parser = argparse.ArgumentParser()
+    os.chdir("../fiqa/data/qa_lstm_tokenizer/")
+    vocab = load_pickle("word2index.pickle")
+    os.chdir("../../../fiqa/data/processed_data/")
+    train_set = load_pickle('train_set_50.pickle')
 
-    parser.add_argument("--train_pickle", default=None, type=str, required=True,
-    help="Path to training data in .pickle format")
-    parser.add_argument("--valid_pickle", default=None, type=str, required=True,
-    help="Path to validation data in .pickle format")
-    parser.add_argument("--model_type", default=None, type=str, required=True,
-    help="Specify model type as 'qa_lstm' or 'bert'")
-    parser.add_argument("--device", default='gpu', type=str, required=False,
-    help="Use GPU or CPU")
+    # parser = argparse.ArgumentParser()
+    #
+    # parser.add_argument("--train_pickle", default=None, type=str, required=True,
+    # help="Path to training data in .pickle format")
+    # parser.add_argument("--valid_pickle", default=None, type=str, required=True,
+    # help="Path to validation data in .pickle format")
+    # parser.add_argument("--model_type", default=None, type=str, required=True,
+    # help="Specify model type as 'qa_lstm' or 'bert'")
+    # parser.add_argument("--device", default='gpu', type=str, required=False,
+    # help="Use GPU or CPU")
+    #
+    # args = parser.parse_args()
+    #
+    # train_set = load_pickle(args.train_pickle)
+    # valid_set = load_pickle(args.valid_pickle)
+    # device = torch.device('cuda' if args.device == 'gpu' else 'cpu')
+    #
+    # if args.model_type == 'qa_lstm'
+    #     os.chdir("../fiqa/data/qa_lstm_tokenizer/")
+    #     vocab = load_pickle("word2index.pickle")
+    #     qid_to_tokenized_text = load_pickle('qid_to_tokenized_text.pickle')
+    #     docid_to_tokenized_text = load_pickle('docid_to_tokenized_text.pickle')
 
-    args = parser.parse_args()
 
-    train_set = load_pickle(args.train_pickle)
-    valid_set = load_pickle(args.valid_pickle)
-    device = torch.device('cuda' if args.device == 'gpu' else 'cpu')
-
-    if args.model_type == 'qa_lstm'
-        path = os.chdir("../fiqa/data/qa_lstm_tokenizer/")
-        vocab = load_pickle("word2index.pickle")
-        qid_to_tokenized_text = load_pickle('qid_to_tokenized_text.pickle')
-        docid_to_tokenized_text = load_pickle('docid_to_tokenized_text.pickle')
 #
 # config = {
 #     'model_type': "qa_lstm",
