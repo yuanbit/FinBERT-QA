@@ -97,10 +97,10 @@ class train_qa_lstm_model():
         for epoch in range(self.n_epochs):
             # Evaluate training loss
             print("Training model...\n")
-            train_loss = QA_LSTM.train(self.model, self.optimizer)
+            train_loss = self.train(self.model, self.optimizer)
             # Evaluate validation loss
             print("Validating...\n")
-            valid_loss = QA_LSTM.validate(self.model)
+            valid_loss = self.validate(self.model)
 
             # At each epoch, if the validation loss is the best
             if valid_loss < best_valid_loss:
