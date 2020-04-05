@@ -84,7 +84,7 @@ class QA_LSTM(nn.Module):
 class train_qa_lstm_model():
     def __init__(self, config):
         self.config = config
-        self.device = device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         self.max_seq_len = config['max_seq_len']
         self.batch_size = config['batch_size']
         self.n_epochs = config['n_epochs']
@@ -168,7 +168,7 @@ class train_qa_lstm_model():
         return q_input_ids, pos_input_ids, neg_input_ids
 
     def get_dataloader(self):
-        print("Generating training data...\n")
+        print("\nGenerating training data...\n")
         train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(train_set)
 
         train_q_inputs = torch.tensor(train_q_input)
@@ -180,7 +180,7 @@ class train_qa_lstm_model():
         train_sampler = RandomSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
 
-        print("Generating validation data...\n")
+        print("\nGenerating validation data...\n")
         valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(valid_set)
 
         valid_q_inputs = torch.tensor(valid_q_input)
@@ -202,9 +202,9 @@ class train_qa_lstm_model():
         # For each batch of training data...
         for step, batch in enumerate(tqdm(train_dataloader)):
             # batch contains eight PyTorch tensors:
-            question = batch[0].to(device)
-            pos_ans = batch[1].to(device)
-            neg_ans = batch[2].to(device)
+            question = batch[0].to(self.device)
+            pos_ans = batch[1].to(self.device)
+            neg_ans = batch[2].to(self.device)
             # 1. Zero gradients
             model.zero_grad()
             # 2. Compute predictions
@@ -228,7 +228,7 @@ class train_qa_lstm_model():
         # Evaluate data for one epoch
         for batch in tqdm(validation_dataloader):
             # Add batch to GPU
-            batch = tuple(t.to(device) for t in batch)
+            batch = tuple(t.to(self.device) for t in batch)
             # Unpack the inputs from our dataloader
             question, pos_ans, neg_ans = batch
             # Don't calculate the gradients
