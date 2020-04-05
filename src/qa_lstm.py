@@ -16,9 +16,6 @@ vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
 qid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
 docid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
 
-train_set = load_pickle('../fiqa/data/processed_data/train_set_50.pickle')
-valid_set = load_pickle('../fiqa/data/processed_data/valid_set_50.pickle')
-
 class QA_LSTM(nn.Module):
     def __init__(self, config):
         super(QA_LSTM, self).__init__()
@@ -39,7 +36,7 @@ class QA_LSTM(nn.Module):
         self.dropout = nn.Dropout(self.dropout)
 
     def create_emb_layer(self):
-        print("Downloading pre-trained GloVe embeddings...\n")
+        print("\nDownloading pre-trained GloVe embeddings...\n")
         emb = torchtext.vocab.GloVe("6B", dim=self.emb_dim)
         # dictionary mapping of word idx to glove vectors
         emb_weights = np.zeros((self.vocab_size, self.emb_dim))
