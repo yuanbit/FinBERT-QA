@@ -92,7 +92,7 @@ class train_qa_lstm_model():
         optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
         # Lowest validation lost
         best_valid_loss = float('inf')
-        train_dataloader, validation_dataloader = get_dataloader()
+        train_dataloader, validation_dataloader = self.get_dataloader()
 
         for epoch in range(self.n_epochs):
             # Evaluate training loss
