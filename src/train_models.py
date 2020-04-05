@@ -5,10 +5,10 @@ from utils import *
 
 def main():
 
-    os.chdir("../fiqa/data/qa_lstm_tokenizer/")
-    vocab = load_pickle("word2index.pickle")
-    os.chdir("../../../fiqa/data/processed_data/")
-    train_set = load_pickle('train_set_50.pickle')
+    # os.chdir("../fiqa/data/qa_lstm_tokenizer/")
+    vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
+    # os.chdir("../../../fiqa/data/processed_data/")
+    train_set = load_pickle('../fiqa/data/processed_data/train_set_50.pickle')
 
     # parser = argparse.ArgumentParser()
     #
