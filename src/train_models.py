@@ -34,10 +34,7 @@ def main():
 
     args = parser.parse_args()
 
-    train_set = load_pickle(args.train_pickle)
-    valid_set = load_pickle(args.valid_pickle)
     device = torch.device('cuda' if args.device == 'gpu' else 'cpu')
-
 
     config = {
         'model_type': args.model_type,
@@ -49,6 +46,8 @@ def main():
         'emb_dim': args.emb_dim,
         'hidden_size': args.hidden_size,
         'dropout': args.dropout,
+        'train_set': args.train_pickle,
+        'valid_set': args.valid_pickle
     }
 
     if config['model_type'] == 'qa_lstm':

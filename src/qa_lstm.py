@@ -85,6 +85,8 @@ class train_qa_lstm_model():
         self.max_seq_len = config['max_seq_len']
         self.batch_size = config['batch_size']
         self.n_epochs = config['n_epochs']
+        self.train_set = load_pickle(cofig['train_set'])
+        self.valid_set = load_pickle(config['valid_test'])
         model = QA_LSTM(self.config).to(self.device)
         optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
         # Lowest validation lost
@@ -166,7 +168,7 @@ class train_qa_lstm_model():
         return q_input_ids, pos_input_ids, neg_input_ids
 
     def get_dataloader(self):
-        train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(train_set)
+        train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(self.train_set)
 
         train_q_inputs = torch.tensor(train_q_input)
         train_pos_inputs = torch.tensor(train_pos_input)
@@ -177,7 +179,7 @@ class train_qa_lstm_model():
         train_sampler = RandomSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
 
-        valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(valid_set)
+        valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(self.valid_set)
 
         valid_q_inputs = torch.tensor(valid_q_input)
         valid_pos_inputs = torch.tensor(valid_pos_input)
