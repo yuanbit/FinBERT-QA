@@ -119,6 +119,23 @@ class train_qa_lstm_model():
 
         return loss
 
+    def pad_seq(self, seq):
+        # Pad each seq to be the same length to process in batch.
+        # pad_token = 0
+        if len(seq) >= self.max_seq_len:
+            seq = seq[:max_seq_len]
+        else:
+            seq += [0]*(self.max_seq_len - len(seq))
+        return seq
+
+    def vectorize(seq, vocab):
+        # Map tokens in seq to idx
+        seq_idx = [vocab[token] for token in seq]
+        # Pad seq idx
+        padded_seq_idx = pad_seq(seq_idx, self.max_seq_len)
+
+        return padded_seq_idx
+
     def get_lstm_input_data(self, dataset):
         q_input_ids = []
         pos_input_ids = []
