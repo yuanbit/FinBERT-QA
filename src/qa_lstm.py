@@ -10,7 +10,7 @@ import torchtext
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from tqdm import tqdm
 
-from utils import *
+from .utils import *
 
 vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
 qid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
