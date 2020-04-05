@@ -39,14 +39,19 @@ class QA_LSTM():
         self.dropout = nn.Dropout(self.dropout)
 
     def create_emb_layer(self):
+        print("Downloading pre-trained GloVe embeddings...\n")
         emb = torchtext.vocab.GloVe("6B", dim=self.emb_dim)
         # dictionary mapping of word idx to glove vectors
         emb_weights = np.zeros((self.vocab_size, self.emb_dim))
+        words_found = 0
 
         for token, idx in self.vocab.items():
             # emb.stoi is a dict of token to idx mapping
             if token in emb.stoi:
-                self.emb_weights[idx] = emb[token]
+                emb_weights[idx] = emb[token]
+                words_found += 1
+
+        print(words_found, " words are found in GloVe\n")
         # Convert numpy matrix to tensor
         emb_weights = torch.from_numpy(emb_weights).float()
 
