@@ -1,4 +1,4 @@
-### Train
+## Train
 ```
 python3 src/train_models.py  [--train_pickle TRAIN_PICKLE] [--valid_pickle VALID_PICKLE] \
 [--model_type MODEL_TYPE] [--device DEVICE] [--max_seq_len MAX_SEQ_LEN] [--batch_size BATCH_SIZE] \
@@ -18,14 +18,14 @@ Arguments:
   DROPOUT - Dropout rate. Specify only if model type is 'qa_lstm'
 ```
 
-#### Example - Training QA-LSTM
+### Example - Training QA-LSTM
 ```
 python3 src/train_models.py --train_pickle data/processed_data/train_set_50.pickle \
 --valid_pickle data/processed_data/valid_set_50.pickle --model_type 'qa_lstm' \
 --max_seq_len 128 --batch_size 64 --n_epochs 1 --lr 0.001
 ```
 
-### Generate Training, Validation, Test Samples
+## Generate Training, Validation, Test Samples
 
 ```
 python3 src/generate_dataset.py  [--train_cands TRAIN_CANDS] \
