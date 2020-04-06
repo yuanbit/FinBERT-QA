@@ -45,9 +45,11 @@ class QA_LSTM(nn.Module):
         self.dropout = nn.Dropout(self.dropout)
 
     def create_emb_layer(self):
-        """Returns a torch embedding layer using pre-trained GloVe embeddings (6B tokens)
+        """Creates embedding layerself using pre-trained
+        GloVe embeddings (6B tokens)
 
-        emb_layer: torch embedding layer
+        Returns:
+            emb_layer: torch embedding layer
         """
         print("\nDownloading pre-trained GloVe embeddings...\n")
         # Use GloVe embeddings from torchtext
@@ -83,12 +85,12 @@ class QA_LSTM(nn.Module):
         answer independently, and then utilize cosine similarity to measure
         their distance.
 
-        Returns cosine similarity of the question and answer.
-
-        similarity: torch tensor with similarity score.
+        Returns:
+            similarity: torch tensor with cosine similarity score.
         ----------
-        question: tensor of vectorized question
-        answer: tensor of vectorized answer
+        Arguements:
+            question: tensor of vectorized question
+            answer: tensor of vectorized answer
         """
         # Embedding layers - (batch_size, max_seq_len, emb_dim)
         question_embedding = self.embedding(q)
@@ -160,23 +162,26 @@ class train_qa_lstm_model():
             print("\t Validation Loss: {}\n".format(round(valid_loss, 3)))
 
     def hinge_loss(self, pos_sim, neg_sim):
-        """Returns hinge loss
-
-        loss: tensor with loss value
+        """
+        Returns:
+            loss: tensor with hinge loss value
         ----------
-        pos_sim: tensor with similarity of a question and a positive answer
-        neg_sim: tensor with similarity of a question and a negative answer
+        Arguements:
+            pos_sim: tensor with similarity of a question and a positive answer
+            neg_sim: tensor with similarity of a question and a negative answer
         """
         loss = torch.max(torch.tensor(0, dtype=torch.float).to(self.device), \
                          self.margin - pos_sim + neg_sim)
         return loss
 
     def pad_seq(self, seq_idx):
-        """Returns padded sequence.
+        """Creates padded sequence.
 
-        seq: list of padded vectorized sequence
+        Returns:
+            seq: list of padded vectorized sequence
         ----------
-        seq_idx: tensor with similarity of a question and a positive answer
+        Arguements:
+            seq_idx: tensor with similarity of a question and a positive answer
         """
         # Pad each sequence to be the same length to process in batches
         # pad_token = 0
@@ -187,11 +192,13 @@ class train_qa_lstm_model():
         return seq
 
     def vectorize(self, seq):
-        """Returns vectorized sequence.
+        """Creates vectorized sequence.
 
-        vectorized_seq: list of padded vectorized sequence
+        Returns:
+            vectorized_seq: list of padded vectorized sequence
         ----------
-        seq: list of tokens in a sequence
+        Arguements:
+            seq: list of tokens in a sequence
         """
         # Map tokens in seq to idx
         seq_idx = [vocab[token] for token in seq]
@@ -201,12 +208,16 @@ class train_qa_lstm_model():
         return vectorized_seq
 
     def get_lstm_input_data(self, dataset):
-        """Returns vectorized sequence.
+        """Creates input data for model.
 
-        vectorized_seq: list of padded vectorized sequence
+        Returns:
+            q_input_ids: list of lists of vectorized question sequence
+            pos_input_ids: list of lists of vectorized positve ans sequence
+            neg_input_ids: list of lists of vectorized negative ans sequence
         ----------
-        seq: list of tokens in a sequence
-        """    
+        Arguements:
+            dataset: list of lists in the form of [qid, [pos ans], [ans cands]]
+        """
         q_input_ids = []
         pos_input_ids = []
         neg_input_ids = []
@@ -214,20 +225,21 @@ class train_qa_lstm_model():
         for i, seq in enumerate(tqdm(dataset)):
             qid, ans_labels, cands = seq[0], seq[1], seq[2]
 
+            # Remove the positive answers for the candidates
             filtered_cands = list(set(cands)-set(ans_labels))
-
+            # Select a positive answer from the list of positive answers
             pos_docid = random.choice(ans_labels)
-
             # Map question id to text
             q_text = qid_to_tokenized_text[qid]
+            # Pad and vectorize text
             q_input_id = self.vectorize(q_text)
 
+            # For all the negative answers
             for neg_docid in filtered_cands:
-
                 # Map the docid to text
                 pos_ans_text = docid_to_tokenized_text[pos_docid]
                 neg_ans_text = docid_to_tokenized_text[neg_docid]
-
+                # Pad and vectorize sequences
                 pos_input_id = self.vectorize(pos_ans_text)
                 neg_input_id = self.vectorize(neg_ans_text)
 
@@ -238,6 +250,13 @@ class train_qa_lstm_model():
         return q_input_ids, pos_input_ids, neg_input_ids
 
     def get_dataloader(self):
+        """Creates train and validation DataLoaders with question, positive
+        answer, and negative answer vectorized inputs.
+
+        Returns:
+            train_dataloader: DataLoader object
+            validation_dataloader: DataLoader object
+        """
         train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(self.train_set)
 
         train_q_inputs = torch.tensor(train_q_input)
@@ -263,19 +282,31 @@ class train_qa_lstm_model():
         return train_dataloader, validation_dataloader
 
     def train(self, model, train_dataloader, optimizer):
+        """Trains the model and returns the average loss
+
+        Returns:
+            avg_loss: float
+        ----------
+        Arguements:
+            model: torch model
+            train_dataloader: DataLoader object
+            optimizer: Optimizer object
+        """
         # Cumulated Training loss
         train_loss = 0.0
         # Set model to training mode
         model.train()
-        # For each batch of training data...
+        # For each batch of training data
         for step, batch in enumerate(tqdm(train_dataloader)):
-            # batch contains eight PyTorch tensors:
+            # batch contains 3 PyTorch tensors
+            # Move tensors to gpu
             question = batch[0].to(self.device)
             pos_ans = batch[1].to(self.device)
             neg_ans = batch[2].to(self.device)
+
             # 1. Zero gradients
             model.zero_grad()
-            # 2. Compute predictions
+            # 2. Compute similarity scores of pos and neg QA pairs
             pos_sim = model(question, pos_ans)
             neg_sim = model(question, neg_ans)
             # 3. Compute loss
@@ -284,27 +315,43 @@ class train_qa_lstm_model():
             loss.backward()
             # 5. Use optimizer to take gradient step
             optimizer.step()
+            # Cumulate loss
             train_loss += loss.item()
+        # Compute average loss
         avg_loss = train_loss/len(train_dataloader)
+
         return avg_loss
 
     def validate(self, model, validation_dataloader):
-        # Cumulated Training loss
+        """Validates the model and returns the average loss
+
+        Returns:
+            avg_loss: float
+        ----------
+        Arguements:
+            model: torch model
+            validation_dataloader: DataLoader object
+        """
+        # Cumulated validation loss
         valid_loss = 0.0
         # Set model to evaluation mode
         model.eval()
-        # Evaluate data for one epoch
+        # Evaluate data
         for batch in tqdm(validation_dataloader):
             # Add batch to GPU
             batch = tuple(t.to(self.device) for t in batch)
-            # Unpack the inputs from our dataloader
+            # Unpack the inputs from Dataloader
             question, pos_ans, neg_ans = batch
             # Don't calculate the gradients
             with torch.no_grad():
+                # Compute similarity score of pos and neg QA pairs
                 pos_sim = model(question, pos_ans)
                 neg_sim = model(question, neg_ans)
+                # Compute loss
                 loss = self.hinge_loss(pos_sim, neg_sim).mean()
+                # Coumulate loss
                 valid_loss += loss.item()
+        # Compute average loss
         avg_loss = valid_loss/len(validation_dataloader)
 
         return avg_loss

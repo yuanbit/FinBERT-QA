@@ -13,8 +13,8 @@ def get_empty_docs(collection):
     """Returns a list of docids with empty answers and a corresponding list
     of ids for the documents dataframe.
     ----------
-    collection: dataframe
-        Dataframe with a column of docid and a column of answer text.
+    Arguments:
+        collection: Dataframe with a column of docid and a column of answer text.
     """
     empty_docs = []
     empty_id = []
@@ -32,11 +32,13 @@ def label_to_dict(df):
     Returns a dictionary converted from the labels dataframe which contains the
     question id and the relevant docids.
 
-    key: question id
-    value: list of relevant docids
+    Returns:
+        qid_rel: Dictonary
+            key - question id
+            value - list of relevant docids
     ----------
-    df: dataframe
-        Dataframe to convert to dictionary
+    Arguments:
+        df: Dataframe to convert to dictionary
     """
     qid_rel = {}
     for index, row in df.iterrows():
@@ -50,9 +52,12 @@ def label_to_dict(df):
 def load_answers_to_df(path):
     """
     Returns a dataframe of docids and answer text.
+
+    Returns:
+        collection: Dataframe
     ----------
-    path: str
-        File path
+    Arguments:
+        path: str
     """
     # Doc ID to Doc text
     collection = pd.read_csv(path, sep="\t")
@@ -64,9 +69,12 @@ def load_answers_to_df(path):
 def load_questions_to_df(path):
     """
     Returns a dataframe of question ids and question text.
+
+    Returns:
+        queries: Dataframe
     ----------
-    path: str
-        File path
+    Arguments:
+        path: str
     """
     # Question ID and Question text
     query_df = pd.read_csv(path, sep="\t")
@@ -76,9 +84,12 @@ def load_questions_to_df(path):
 
 def load_qid_docid_to_df(path):
     """Returns a dataframe of question id and relevant docid answers.
+
+    Returns:
+        qid_docid: Dataframe
     ----------
-    path: str
-        File path
+    Arguments:
+        path: str
     """
     qid_docid = pd.read_csv(path, sep="\t")
     qid_docid = qid_docid [['qid', 'docid']]
@@ -88,10 +99,9 @@ def load_qid_docid_to_df(path):
 def save_tsv(path, df):
     """Saves a dataframe to tsv file.
     ----------
-    path: str
-        File path
-    df: dataframe
-        Dataframe to save
+    Arguments:
+        path: str
+        df: Dataframe
     """
     with open(path,'w') as write_tsv:
         write_tsv.write(df.to_csv(sep='\t', index=False, header=False))
@@ -99,10 +109,9 @@ def save_tsv(path, df):
 def collection_to_json(json_path, collection_path):
     """Converts a df to JSON file for Anserini's document indexer.
     ----------
-    json_path: str
-        Output file path
-    collection_path: str
-        Input file path
+    Arguments:
+        json_path: str output file path
+        collection_path: str input file path
     """
     output_jsonl_file = open(json_path, 'w', encoding='utf-8', newline='\n')
 
@@ -120,11 +129,19 @@ def split_label(qid_docid):
     """
     Split question answer pairs into train, test, validation sets.
 
-    Returns train, test, and validation dictionaries containing the corresponding
-    question ids and list of relevant docids.
+    Returns:
+        train_label: Dictonary
+            key - question id
+            value - list of relevant docids
+        test_label: Dictonary
+            key - question id
+            value - list of relevant docids
+        valid_label: Dictonary
+            key - question id
+            value - list of relevant docids
     ----------
-    qid_docid: dataframe
-        Dataframe containing the question id and relevant answer docids
+    Arguments:
+        qid_docid: Dataframe containing the question id and relevant docids
     """
     # Group the answers for each question into a list
     qid_docid = qid_docid.groupby(['qid']).agg(lambda x: tuple(x)).applymap(list).reset_index()
@@ -147,17 +164,16 @@ def split_question(train_label, test_label, valid_label, queries):
     """
     Split questions into train, test, validation sets.
 
-    Returns train, test, and validation dataframes containing the corresponding
-    question ids.
+    Returns:
+        train_questions: Dataframe with qids
+        test_questions: Dataframe with qids
+        valid_questions: Dataframe with qids
     ----------
-    train_label: dictionary
-        Dictionary contraining qid and list of relevant docid
-    test_label: dictionary
-        Dictionary contraining qid and list of relevant docid
-    valid_label: dictionary
-        Dictionary contraining qid and list of relevant docid
-    queries: dataframe
-        Dataframe containing the question id and question text
+    Arguments:
+        train_label: Dictionary contraining qid and list of relevant docid
+        test_label: Dictionary contraining qid and list of relevant docid
+        valid_label: Dictionary contraining qid and list of relevant docid
+        queries: Dataframe containing the question id and question text
     """
     # Get a list of question ids
     train_q = list(train_label.keys())

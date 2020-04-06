@@ -8,9 +8,12 @@ from utils import *
 
 def pre_process(text):
     """Returns a lower-cased string with punctuations and special characters removed.
+
+    Returns:
+        processed_text: str
     ----------
-    text: string
-        Answer or Question text
+    Arguments:
+        text: str of answer or question text
     """
     text = str(text)
     # Substitute punctuations and special characters for a space
@@ -18,14 +21,18 @@ def pre_process(text):
     # Remove periods
     y = re.sub('[\.\']', "", x)
     # Apply lower-case
-    z = y.lower()
-    return z
+    processed_text = y.lower()
+
+    return processed_text
 
 def process_questions(queries):
     """Returns a dataframe with tokenized questions.
+
+    Returns:
+        queries: Dataframe
     ----------
-    queries: dataframe
-        Dataframe containing qids and questions
+    Arguments:
+        queries: Dataframe containing qids and questions
     """
     # Pre-process questions
     queries['q_processed'] = queries['question'].apply(pre_process)
@@ -38,9 +45,12 @@ def process_questions(queries):
 
 def process_answers(collection):
     """Returns a dataframe with tokenized answers.
+
+    Returns:
+        collection: Dataframe
     ----------
-    collection: dataframe
-        Dataframe containing docids and answers
+    Arguments:
+        collection: Dataframe containing docids and answers
     """
     # Pre-process answers
     collection['doc_processed'] = collection['doc'].apply(pre_process)
@@ -55,17 +65,17 @@ def create_vocab(processed_answers, processed_questions):
     """Returns two dictionaries containing the token to id mapping and token
     to count mapping.
 
-    word2index: dictionary
-        key - token
-        value - token id
-    word2count: dictionary
-        key - token
-        value - frequency count
+    Returns:
+        word2index: dictionary
+            key - token
+            value - token id
+        word2count: dictionary
+            key - token
+            value - frequency count
     ----------
-    processed_answers: dataframe
-        Dataframe containing docid and tokenized answers
-    processed_questions: dataframe
-        Dataframe containing qid and tokenized questions
+    Arguments:
+        processed_answers: Dataframe containing docid and tokenized answers
+        processed_questions: Dataframe containing qid and tokenized questions
     """
     # Initialize dictionary with special token
     word2index = {"PAD": 0}
@@ -104,17 +114,19 @@ def create_vocab(processed_answers, processed_questions):
 def id_to_text(collection, queries):
     """Returns two dictionaries mapping id to text.
 
-    qid_to_text: dictionary
-        key - qid
-        value - question text
-    docid_to_text: dictionary
-        key - docid
-        value - answer text
+    Returns:
+        qid_to_text: dictionary
+            key - qid
+            value - question text
+        docid_to_text: dictionary
+            key - docid
+            value - answer text
     ----------
-    collection: dataframe
-        Dataframe containing docids and answers
-    queries: dataframe
-        Dataframe containing qids and questions
+    Arguments:
+        collection: dataframe
+            Dataframe containing docids and answers
+        queries: dataframe
+            Dataframe containing qids and questions
     """
     qid_to_text = {}
     docid_to_text = {}
@@ -130,17 +142,19 @@ def id_to_text(collection, queries):
 def id_to_tokenized_text(processed_answers, processed_questions):
     """Returns two dictionaries mapping id to tokenized text.
 
-    qid_to_text: dictionary
-        key - qid
-        value - list of question tokens
-    docid_to_text: dictionary
-        key - docid
-        value - list of answer tokens
+    Retuns:
+        qid_to_text: dictionary
+            key - qid
+            value - list of question tokens
+        docid_to_text: dictionary
+            key - docid
+            value - list of answer tokens
     ----------
-    collection: dataframe
-        Dataframe containing docids and tokenized answers
-    queries: dataframe
-        Dataframe containing qids and tokenized questions
+    Arguments:
+        collection: dataframe
+            Dataframe containing docids and tokenized answers
+        queries: dataframe
+            Dataframe containing qids and tokenized questions
     """
     qid_to_tokenized_text = {}
     docid_to_tokenized_text = {}
