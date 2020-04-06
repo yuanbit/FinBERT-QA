@@ -138,9 +138,10 @@ class train_qa_lstm_model():
         model = QA_LSTM(self.config).to(self.device)
         # Use Adam optimizer
         optimizer = optim.Adam(model.parameters(), lr=config['lr'])
+
         # Lowest validation lost
         best_valid_loss = float('inf')
-
+        
         print("\nGenerating training and validation data...\n")
         train_dataloader, validation_dataloader = self.get_dataloader()
 
@@ -175,7 +176,7 @@ class train_qa_lstm_model():
         return loss
 
     def pad_seq(self, seq_idx):
-        """Creates padded sequence.
+        """Creates padded or truncated sequence.
 
         Returns:
             seq: list of padded vectorized sequence

@@ -14,7 +14,7 @@ def main():
     help="Specify model type as 'qa-lstm' or 'bert'")
     parser.add_argument("--bert_model_name", default=None, type=str, required=True,
     help="Specify BERT model name to use from 'bert-base', 'finbert-domain', \
-    'finbert-task', 'finbert-qa'")
+    'finbert-task', 'bert-qa'")
 
     parser.add_argument("--device", default='gpu', type=str, required=False,
     help="Specify 'gpu' or 'cpu'")
@@ -36,7 +36,10 @@ def main():
     parser.add_argument("--margin", default=0.2, type=float, required=False,
     help="Margin for pairwise loss. Specify only if model type is 'qa_lstm' \
     or if 'learning_approach' is pairwise")
-
+    parser.add_argument("--weight_decay", default=0.01, type=float, required=False,
+    help="Weight decay. Specify only if model type is 'bert'")
+    parser.add_argument("--num_warmup_steps", default=10000, type=int, required=False,
+    help="Number of warmup steps. Specify only if model type is 'bert'")
 
     args = parser.parse_args()
 
@@ -53,6 +56,7 @@ def main():
         'hidden_size': args.hidden_size,
         'dropout': args.dropout,
         'margin:' args.margin,
+        'weight_decay': args.weight_decay
         'train_set': args.train_pickle,
         'valid_set': args.valid_pickle
     }
