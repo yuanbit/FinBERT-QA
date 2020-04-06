@@ -45,6 +45,11 @@ class get_data:
         return qid_ranked_docs
 
     def create_dataset(self):
+        """Returns a list of lists of the dataset containing the question id,
+        list of relevant answer ids, and the list of answer candidates
+        ----------
+        dataset: list of list in the form [qid, [pos ans], [ans candidates]]
+        """
         # Dictionary of question id and list of positive answers
         qid_rel = load_pickle(self.qid_rel_path)
         # Dictionary of question id and list of candidate answers
@@ -53,7 +58,6 @@ class get_data:
         dataset = []
 
         for qid, docid in qid_rel.items():
-
             for ques, cand in cands.items():
                 if 0 not in cand:
                     cand_ans = cand

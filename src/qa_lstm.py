@@ -3,100 +3,146 @@ import numpy as np
 import random
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-from torchtext import data
-import torchtext
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+import torchtext
 from tqdm import tqdm
 
 from helper.utils import *
 
+# Dictonary with token to id mapping
 vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
+# Dictonary with qid to tokenized text mapping
 qid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
+# Dictionary with docid to tokenized text mapping
 docid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
 
 class QA_LSTM(nn.Module):
+    """
+    QA-LSTM model
+    """
     def __init__(self, config):
         super(QA_LSTM, self).__init__()
+        # Embedding dimension
         self.emb_dim = config['emb_dim']
+        # Hidden size
         self.hidden_size = config['hidden_size']
+        # Dropout rate
         self.dropout = config['dropout']
+        # Vocabulary size
         self.vocab_size = len(vocab)
-
-        # Shape - (max_seq_len, emb_dim)
+        # Create embedding layer
         self.embedding = self.create_emb_layer()
-
-        self.shared_lstm = nn.LSTM(self.emb_dim, \
-                                   self.hidden_size, \
-                                   num_layers=1, \
-                                   batch_first=True, \
-                                   bidirectional=True)
-        self.cos = nn.CosineSimilarity(dim=1)
+        # The question and answer representations share the same biLSTM network
+        self.lstm = nn.LSTM(self.emb_dim, \
+                            self.hidden_size, \
+                            num_layers=1, \
+                            batch_first=True, \
+                            bidirectional=True)
+        # Cosine similiarty metric
+        self.sim = nn.CosineSimilarity(dim=1)
+        # Apply dropout
         self.dropout = nn.Dropout(self.dropout)
 
     def create_emb_layer(self):
+        """Returns a torch embedding layer using pre-trained GloVe embeddings (6B tokens)
+
+        emb_layer: torch embedding layer
+        """
         print("\nDownloading pre-trained GloVe embeddings...\n")
+        # Use GloVe embeddings from torchtext
         emb = torchtext.vocab.GloVe("6B", dim=self.emb_dim)
-        # dictionary mapping of word idx to glove vectors
+        # Dictionary mapping of word idx to GloVe vectors
         emb_weights = np.zeros((self.vocab_size, self.emb_dim))
+        # Count
         words_found = 0
 
         for token, idx in vocab.items():
             # emb.stoi is a dict of token to idx mapping
+            # If token from the vocabulary exist in GloVe
             if token in emb.stoi:
+                # Add the embedding to the index
                 emb_weights[idx] = emb[token]
                 words_found += 1
 
         print("\n")
         print(words_found, "words are found in GloVe\n")
-        # Convert numpy matrix to tensor
+        # Convert matrix to tensor
         emb_weights = torch.from_numpy(emb_weights).float()
 
         vocab_size, emb_dim = emb_weights.shape
+        # Create embedding layer
         emb_layer = nn.Embedding(vocab_size, emb_dim)
+        # Load the embeddings
         emb_layer.load_state_dict({'weight': emb_weights})
 
         return emb_layer
 
-    def forward(self, q, a):
-        # embedding
-        q = self.embedding(q) # (bs, L, E)
-        a = self.embedding(a) # (bs, L, E)
+    def forward(self, question, answer):
+        """Forward pass to generate biLSTM representations for the question and
+        answer independently, and then utilize cosine similarity to measure
+        their distance.
 
-        # LSTM
-        q, (hidden, cell) = self.shared_lstm(q) # (bs, L, 2H)
-        a, (hidden, cell) = self.shared_lstm(a) # (bs, L, 2H)
+        Returns cosine similarity of the question and answer.
 
-        # Output shape (batch size, seq_len, num_direction * hidden_size)
-        # There are n of word level biLSTM representations for the seq where n is the number of seq len
+        similarity: torch tensor with similarity score.
+        ----------
+        question: tensor of vectorized question
+        answer: tensor of vectorized answer
+        """
+        # Embedding layers - (batch_size, max_seq_len, emb_dim)
+        question_embedding = self.embedding(q)
+        answer_embedding = self.embedding(a)
+
+        # biLSTM - (batch_size, max_seq_len, 2*hidden_size)
+        question_lstm, (hidden, cell) = self.lstm(question_embedding)
+        answer_lstm, (hidden, cell) = self.lstm(answer_embedding)
+
+        # Max-pooling - (batch_size, 2*hidden_size)
+        # There are n word level biLSTM representations where n is the max_seq_len
         # Use max pooling to generate the best representation
-        q = torch.max(q, 1)[0]
-        a = torch.max(a, 1)[0] # (bs, 2H)
+        question_max_pool = torch.max(question_lstm, 1)[0]
+        answer_maxpool = torch.max(answer_lstm, 1)[0]
 
-        q = self.dropout(q)
-        a = self.dropout(a)
+        # Apply dropout
+        question_output = self.dropout(question_maxpool)
+        answer_output = self.dropout(answer_maxpool)
 
-        return self.cos(q, a) # (bs,)
+        # Similarity -(batch_size,)
+        similarity = self.sim(question_output, answer_output)
+
+        return similarity
 
 class train_qa_lstm_model():
+    """Train the QA-LSTM model
+    """
     def __init__(self, config):
         self.config = config
+        # Use GPU or CPU
         self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        # Maximum sequence length
         self.max_seq_len = config['max_seq_len']
+        # Batch size
         self.batch_size = config['batch_size']
+        # Number of epochs
         self.n_epochs = config['n_epochs']
+        # Margin for hinge loss
+        self.margin = config['margin']
+        # Load training set
         self.train_set = load_pickle(config['train_set'])
+        # Load validation set
         self.valid_set = load_pickle(config['valid_set'])
+        # Initialize model
         model = QA_LSTM(self.config).to(self.device)
+        # Use Adam optimizer
         optimizer = optim.Adam(model.parameters(), lr=config['lr'])
         # Lowest validation lost
         best_valid_loss = float('inf')
+
         print("\nGenerating training and validation data...\n")
         train_dataloader, validation_dataloader = self.get_dataloader()
 
         print("\nTraining model...\n")
-
         for epoch in range(self.n_epochs):
             # Evaluate training loss
             train_loss = self.train(model, train_dataloader, optimizer)
@@ -114,30 +160,53 @@ class train_qa_lstm_model():
             print("\t Validation Loss: {}\n".format(round(valid_loss, 3)))
 
     def hinge_loss(self, pos_sim, neg_sim):
-        margin = 0.2
+        """Returns hinge loss
 
-        loss = torch.max(torch.tensor(0, dtype=torch.float).to(self.device), margin - pos_sim + neg_sim)
-
+        loss: tensor with loss value
+        ----------
+        pos_sim: tensor with similarity of a question and a positive answer
+        neg_sim: tensor with similarity of a question and a negative answer
+        """
+        loss = torch.max(torch.tensor(0, dtype=torch.float).to(self.device), \
+                         self.margin - pos_sim + neg_sim)
         return loss
 
     def pad_seq(self, seq_idx):
-        # Pad each seq to be the same length to process in batch.
+        """Returns padded sequence.
+
+        seq: list of padded vectorized sequence
+        ----------
+        seq_idx: tensor with similarity of a question and a positive answer
+        """
+        # Pad each sequence to be the same length to process in batches
         # pad_token = 0
         if len(seq_idx) >= self.max_seq_len:
-            seq_idx = seq_idx[:self.max_seq_len]
+            seq = seq_idx[:self.max_seq_len]
         else:
-            seq_idx += [0]*(self.max_seq_len - len(seq_idx))
-        return seq_idx
+            seq += [0]*(self.max_seq_len - len(seq_idx))
+        return seq
 
     def vectorize(self, seq):
+        """Returns vectorized sequence.
+
+        vectorized_seq: list of padded vectorized sequence
+        ----------
+        seq: list of tokens in a sequence
+        """
         # Map tokens in seq to idx
         seq_idx = [vocab[token] for token in seq]
         # Pad seq idx
-        padded_seq_idx = self.pad_seq(seq_idx)
+        vectorized_seq = self.pad_seq(seq_idx)
 
-        return padded_seq_idx
+        return vectorized_seq
 
     def get_lstm_input_data(self, dataset):
+        """Returns vectorized sequence.
+
+        vectorized_seq: list of padded vectorized sequence
+        ----------
+        seq: list of tokens in a sequence
+        """    
         q_input_ids = []
         pos_input_ids = []
         neg_input_ids = []

@@ -30,6 +30,9 @@ def main():
     help="Hidden size. Specify only if model type is 'qa_lstm'")
     parser.add_argument("--dropout", default=0.2, type=float, required=False,
     help="Dropout rate. Specify only if model type is 'qa_lstm'")
+    parser.add_argument("--margin", default=0.2, type=float, required=False,
+    help="Margin for pairwise loss. Specify only if model type is 'qa_lstm' \
+    or if 'learning_approach' is pairwise")
 
 
     args = parser.parse_args()
@@ -46,6 +49,7 @@ def main():
         'emb_dim': args.emb_dim,
         'hidden_size': args.hidden_size,
         'dropout': args.dropout,
+        'margin:' args.margin,
         'train_set': args.train_pickle,
         'valid_set': args.valid_pickle
     }
