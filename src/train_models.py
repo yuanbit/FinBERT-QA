@@ -11,7 +11,10 @@ def main():
     parser.add_argument("--valid_pickle", default=None, type=str, required=True,
     help="Path to validation data in .pickle format")
     parser.add_argument("--model_type", default=None, type=str, required=True,
-    help="Specify model type as 'qa_lstm' or 'bert'")
+    help="Specify model type as 'qa-lstm' or 'bert'")
+    parser.add_argument("--bert_model_name", default=None, type=str, required=True,
+    help="Specify BERT model name to use from 'bert-base', 'finbert-domain', \
+    'finbert-task', 'finbert-qa'")
 
     parser.add_argument("--device", default='gpu', type=str, required=False,
     help="Specify 'gpu' or 'cpu'")
@@ -54,7 +57,7 @@ def main():
         'valid_set': args.valid_pickle
     }
 
-    if config['model_type'] == 'qa_lstm':
+    if config['model_type'] == 'qa-lstm':
         train_qa_lstm_model(config)
     else:
         pass
