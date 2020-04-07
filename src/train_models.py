@@ -42,11 +42,9 @@ def main():
     parser.add_argument("--bert_model_name", default="bert-qa", type=str, required=False, \
     help="Specify BERT model name to use from 'bert-base', 'finbert-domain', 'finbert-task', 'bert-qa'")
     parser.add_argument("--learning_approach", default="pointwise", type=str, \
-                        required=False, help="Learning approach. Specify \
-                        'pointwise' or 'pairwise' only if model_type is 'bert'.")
+                        required=False, help="Learning approach. Specify 'pointwise' or 'pairwise' only if model_type is 'bert'.")
     parser.add_argument("--margin", default=0.2, type=float, required=False,
-    help="Margin for pairwise loss. Specify only if model type is 'qa_lstm' \
-    or if 'learning_approach' is pairwise")
+    help="Margin for pairwise loss. Specify only if model type is 'qa_lstm' or if 'learning_approach' is pairwise")
     parser.add_argument("--weight_decay", default=0.01, type=float, required=False,
     help="Weight decay. Specify only if model type is 'bert'")
     parser.add_argument("--num_warmup_steps", default=10000, type=int, required=False,
