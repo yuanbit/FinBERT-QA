@@ -22,7 +22,7 @@ Arguments:
 
 ### Example - Train QA-LSTM with default data and configurations
 ```
-python3 src/train_models.py --model_type 'qa-lstm' --use_default_config True
+python3 src/train_models.py --model_type 'qa-lstm' --use_default_config
 ```
 ```
 DEFAULT_CONFIG = {'model_type': 'qa-lstm',
@@ -41,8 +41,8 @@ DEFAULT_CONFIG = {'model_type': 'qa-lstm',
 
 ### Example - Train custom QA-LSTM
 ```
-python3 src/train_models.py --model_type 'qa-lstm' --use_default_config False \
---train_pickle data/sample/train_set_50.pickle \
---valid_pickle data/processed_data/valid_set_50.pickle  \
---max_seq_len 256 --batch_size 128 --n_epochs 6 --lr 0.005
+python3 src/train_models.py --model_type 'qa-lstm' \
+--train_pickle data/sample/train_toy.pickle \
+--valid_pickle data/sample/valid_toy.pickle \
+--max_seq_len 256 --batch_size 128 --n_epochs 6 --lr 0.001
 ```
