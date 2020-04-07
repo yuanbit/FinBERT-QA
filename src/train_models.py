@@ -66,7 +66,7 @@ def main():
               'dropout': args.dropout,
               'bert_model_name': args.bert_model_name,
               'learning_approach': args.learning_approach,
-              'margin:' args.margin,
+              'margin': args.margin,
               'weight_decay': args.weight_decay,
               'num_warmup_steps': args.num_warmup_steps}
 

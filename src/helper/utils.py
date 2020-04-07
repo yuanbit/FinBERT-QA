@@ -3,7 +3,7 @@ from itertools import islice
 import pickle
 import json
 
-from download import *
+from .download import *
 
 def take(n, iterable):
     """Return first n items of a dictiionary as a list.

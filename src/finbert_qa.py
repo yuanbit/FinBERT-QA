@@ -20,7 +20,7 @@ DEFAULT_CONFIG = {'model_type': 'bert',
                   'batch_size': 16,
                   'n_epochs': 3,
                   'lr': 3e-6,
-                  'bert_model_name': 'bert-qa'
+                  'bert_model_name': 'bert-qa',
                   'weight_decay': 0.01,
                   'num_warmup_steps': 10000}
 
@@ -387,7 +387,7 @@ class train_bert_model():
     """
     def __init__(self, config):
         # Overwrite config to default
-        if config['use_default_config'] == True
+        if config['use_default_config'] == True:
             config = DEFAULT_CONFIG
         else:
             config = config
