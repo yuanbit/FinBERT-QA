@@ -50,19 +50,28 @@ def get_data(data_name):
 
     zip_name = data_name + ".zip"
 
-    # If model does not exist
-    if not os.path.exists(data_path/"train_q_input.pickle"):
-        print("\nDownloading {} input data...\n".format(data_name))
-        
-        if data_name == "qa-lstm":
+    if data_name == "qa-lstm":
+        # If model does not exist
+        if not os.path.exists(data_path/"train_q_input.pickle"):
+            print("\nDownloading {} input data...\n".format(data_name))
             url = "https://www.dropbox.com/s/1u9a2mu1oqujw03/qa-lstm.zip?dl=1"
             download_zip(url, data_path, zip_name)
-        elif data_name == "pointwise-bert":
+        else:
+            pass
+    elif data_name == "pointwise-bert":
+        if not os.path.exists(data_path/"train_input_512.pickle"):
+            print("\nDownloading {} input data...\n".format(data_name))
             url = "https://www.dropbox.com/s/w6rctzpbvun1c0x/pointwise-bert.zip?dl=1"
             download_zip(url, data_path, zip_name)
         else:
+            pass
+    else:
+        if not os.path.exists(data_path/"train_pos_input_128_50.pickle"):
+            print("\nDownloading {} input data...\n".format(data_name))
             url = "https://www.dropbox.com/s/m9a21c4ubwrzkwx/pairwise-bert.zip?dl=1"
             download_zip(url, data_path, zip_name)
+        else:
+            pass
 
 def get_model(model_name):
     """Creates model directory and downloads models.

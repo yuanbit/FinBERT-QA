@@ -78,7 +78,7 @@ class PointwiseBERT():
         # Generate training and validation data
         print("\nGenerating training and validation data...")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()
-        print("\nLoading pre-trained BERT model...")
+        print("\nLoading pre-trained BERT model...\n")
         # Initialize model
         self.model = model
         self.optimizer = optimizer
@@ -363,6 +363,7 @@ class PointwiseBERT():
         # Lowest validation lost
         best_valid_loss = float('inf')
 
+        print("\nTraining model...\n")
         for epoch in range(self.n_epochs):
             # Evaluate training loss
             train_loss, train_acc = self.train(self.model, \
