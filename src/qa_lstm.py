@@ -17,6 +17,18 @@ qid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/qid_to_token
 # Dictionary with docid to tokenized text mapping
 docid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
 
+DEFAULT_CONFIG = {'model_type': 'qa-lstm',
+                  'use_default_config': True,
+                  'device': 'gpu',
+                  'max_seq_len': 128,
+                  'batch_size': 64,
+                  'n_epochs': 3,
+                  'lr': 1e-3,
+                  'emb_dim': 100,
+                  'hidden_size': 256,
+                  'dropout': 0.2,
+                  'margin:' 0.2}
+
 class QA_LSTM(nn.Module):
     """
     QA-LSTM model
@@ -119,27 +131,32 @@ class train_qa_lstm_model():
     """Train the QA-LSTM model
     """
     def __init__(self, config):
-        self.config = config
+        # Overwrite config to default
+        if config['use_default_config'] == True
+            self.config = DEFAULT_CONFIG
+        else:
+            self.config = config
+            # Load training set
+            self.train_set = load_pickle(self.config['train_set'])
+            # Load validation set
+            self.valid_set = load_pickle(self.config['valid_set'])
         # Use GPU or CPU
         self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         # Maximum sequence length
-        self.max_seq_len = config['max_seq_len']
+        self.max_seq_len = self.config['max_seq_len']
         # Batch size
-        self.batch_size = config['batch_size']
+        self.batch_size = self.config['batch_size']
         # Number of epochs
-        self.n_epochs = config['n_epochs']
+        self.n_epochs = self.config['n_epochs']
         # Margin for hinge loss
-        self.margin = config['margin']
-        # Load training set
-        self.train_set = load_pickle(config['train_set'])
-        # Load validation set
-        self.valid_set = load_pickle(config['valid_set'])
+        self.margin = self.config['margin']
+
         print("\nGenerating training and validation data...\n")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()
         # Initialize model
         self.model = QA_LSTM(self.config).to(self.device)
         # Use Adam optimizer
-        self.optimizer = optim.Adam(model.parameters(), lr=config['lr'])
+        self.optimizer = optim.Adam(model.parameters(), lr=self.config['lr'])
 
         self.train_lstm()
 
@@ -239,23 +256,25 @@ class train_qa_lstm_model():
             train_dataloader: DataLoader object
             validation_dataloader: DataLoader object
         """
-        train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(self.train_set)
+        if self.config['use_default_config'] == True:
+            train_q_input, train_pos_input, train_neg_input, \
+            valid_q_input, valid_pos_input, valid_neg_input = load_input_data("qa-lstm")
+        else:
+            train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(self.train_set)
+            valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(self.valid_set)
 
         train_q_inputs = torch.tensor(train_q_input)
         train_pos_inputs = torch.tensor(train_pos_input)
         train_neg_inputs = torch.tensor(train_neg_input)
-
         # Create the DataLoader for our training set.
         train_data = TensorDataset(train_q_inputs, train_pos_inputs, train_neg_inputs)
         train_sampler = RandomSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
 
-        valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(self.valid_set)
 
         valid_q_inputs = torch.tensor(valid_q_input)
         valid_pos_inputs = torch.tensor(valid_pos_input)
         valid_neg_inputs = torch.tensor(valid_neg_input)
-
         # Create the DataLoader for our validation set.
         validation_data = TensorDataset(valid_q_inputs, valid_pos_inputs, valid_neg_inputs)
         validation_sampler = SequentialSampler(validation_data)

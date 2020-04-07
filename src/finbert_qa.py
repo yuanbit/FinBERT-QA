@@ -7,18 +7,30 @@ from torch.nn.functional import softmax
 from transformers import BertTokenizer, BertForSequenceClassification, AdamW, get_linear_schedule_with_warmup, BertConfig
 
 from helper.utils import *
-from helper.download_model import *
+from helper.download import *
 
 # Dictionary mapping of docid and qid to raw text
 docid_to_text = load_pickle('../fiqa/data/id_to_text/docid_to_text.pickle')
 qid_to_text = load_pickle('../fiqa/data/id_to_text/qid_to_text.pickle')
 
+DEFAULT_CONFIG = {'model_type': 'bert',
+                  'use_default_config': True,
+                  'device': 'gpu',
+                  'max_seq_len': 512,
+                  'batch_size': 16,
+                  'n_epochs': 3,
+                  'lr': 3e-6,
+                  'bert_model_name': 'bert-qa'
+                  'weight_decay': 0.01,
+                  'num_warmup_steps': 10000}
+
 class BERT_QA():
     """Fine-tuned BERT model for non-factoid question answering.
     """
-    def __init__(self, config):
-        self.config = config
-        self.bert_model_name = self.config['bert_model_name']
+    def __init__(self, bert_model_name):
+        """Initialize which pre-trained BERT model to use.
+        """
+        self.bert_model_name = bert_model_name
 
     def initialize_model(self):
         """Initialize which pre-trained BERT model to use.
@@ -29,7 +41,6 @@ class BERT_QA():
         Returns:
             model: Torch model
         """
-
         if self.bert_model_name == "bert-base":
             model_path = "bert-base-uncase"
         elif self.bert_model_name == "finbert-domain":
@@ -45,10 +56,14 @@ class BERT_QA():
         return model
 
 class PointwiseBERT():
-    def __init__(self, config, tokenizer, train_set, valid_set, model, optimizer):
-        self.config = config
+    def __init__(self, config, tokenizer, model, optimizer):
+        # Overwrite config to default
+        if config['use_default_config'] == False:
+            self.train_set = load_pickle(self.config['train_set'])
+            # Load validation set
+            self.valid_set = load_pickle(self.config['valid_set'])
         # Use GPU or CPU
-        self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        self.device = config['device']
         # Maximum sequence length
         self.max_seq_len = config['max_seq_len']
         # Batch size
@@ -57,10 +72,6 @@ class PointwiseBERT():
         self.n_epochs = config['n_epochs']
         # Load the BERT tokenizer.
         self.tokenizer = tokenizer
-        # Load training set
-        self.train_set = train_set
-        # Load validation set
-        self.valid_set = valid_set
         # Generate training and validation data
         print("\nGenerating training and validation data...\n")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()
@@ -68,12 +79,12 @@ class PointwiseBERT():
         self.model = model
         self.optimizer = optimizer
         # Total number of training steps is number of batches * number of epochs.
-        self.total_steps = len(self.train_dataloader) * self.n_epochs
+        total_steps = len(self.train_dataloader) * self.n_epochs
         # Create a schedule with a learning rate that decreases linearly
         # after linearly increasing during a warmup period
         self.scheduler = get_linear_schedule_with_warmup(self.optimizer, \
-                    num_warmup_steps = self.config['num_warmup_steps'], \
-                    num_training_steps = self.total_steps)
+                    num_warmup_steps = config['num_warmup_steps'], \
+                    num_training_steps = total_steps)
 
     def get_input_data(self, dataset):
         """Creates input parameters for training and validation.
@@ -149,12 +160,17 @@ class PointwiseBERT():
             train_dataloader: DataLoader object
             validation_dataloader: DataLoader object
         """
-        # Create training input parameters
-        train_input, train_type_id, \
-        train_att_mask, train_label = self.get_input_data(self.train_set)
-        # Create validation input parameters
-        valid_input, valid_type_id, \
-        valid_att_mask, valid_label = self.get_input_data(self.valid_set)
+        if self.config['use_default_config'] == True:
+            train_input, train_type_id, train_att_mask, \
+            train_label, valid_input, valid_type_id, \
+            valid_att_mask, valid_label = load_input_data("pointwise-bert")
+        else:
+            # Create training input parameters
+            train_input, train_type_id, \
+            train_att_mask, train_label = self.get_input_data(self.train_set)
+            # Create validation input parameters
+            valid_input, valid_type_id, \
+            valid_att_mask, valid_label = self.get_input_data(self.valid_set)
 
         # Convert all train inputs and labels into torch tensors
         train_inputs = torch.tensor(train_input)
@@ -370,25 +386,26 @@ class train_bert_model():
     Train the fine-tuned BERT model.
     """
     def __init__(self, config):
-        config = config
+        # Overwrite config to default
+        if config['use_default_config'] == True
+            config = DEFAULT_CONFIG
+        else:
+            config = config
         # Use GPU or CPU
         device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        # Pre-trained BERT model name
+        bert_model_name = config['bert_model_name']
         # Load the BERT tokenizer.
         print('Loading BERT tokenizer...')
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-        # Load training set
-        train_set = load_pickle(config['train_set'])
-        # Load validation set
-        valid_set = load_pickle(config['valid_set'])
         # Initialize model
-        model = BERT_QA(config).initialize_model.to(self.device)
-        optimizer = AdamW(model.parameters(), lr = self.config['lr'], \
-                          weight_decay=self.config['weight_decay'])
+        model = BERT_QA(bert_model_name).initialize_model.to(device)
+        optimizer = AdamW(model.parameters(), lr = config['lr'], \
+                          weight_decay=config['weight_decay'])
 
         # Train and validate model based on learning approach
         if config['learning_approach'] == 'pointwise':
-            trainer = PointwiseBERT(config, tokenizer, train_set, valid_set, \
-                                    model, optimizer)
+            trainer = PointwiseBERT(config, tokenizer, model, optimizer)
             trainer.train_pointwise()
         else:
             pass
