@@ -20,9 +20,29 @@ Arguments:
   DROPOUT - Dropout rate. Specify only if model type is 'qa_lstm'
 ```
 
-### Example - Training QA-LSTM
+### Example - Train QA-LSTM with default data and configurations
 ```
-python3 src/train_models.py --train_pickle data/processed_data/train_set_50.pickle \
---valid_pickle data/processed_data/valid_set_50.pickle --model_type 'qa_lstm' \
---max_seq_len 128 --batch_size 64 --n_epochs 3 --lr 0.001
+python3 src/train_models.py --model_type 'qa-lstm' --use_default_config True
+```
+```
+DEFAULT_CONFIG = {'model_type': 'qa-lstm',
+                  'use_default_config': True,
+                  'device': 'gpu',
+                  'max_seq_len': 128,
+                  'batch_size': 64,
+                  'n_epochs': 3,
+                  'lr': 1e-3,
+                  'emb_dim': 100,
+                  'hidden_size': 256,
+                  'dropout': 0.2,
+                  'margin:' 0.2}
+```
+
+
+### Example - Train custom QA-LSTM
+```
+python3 src/train_models.py --model_type 'qa-lstm' --use_default_config False \
+--train_pickle data/sample/train_set_50.pickle \
+--valid_pickle data/processed_data/valid_set_50.pickle  \
+--max_seq_len 256 --batch_size 128 --n_epochs 6 --lr 0.005
 ```
