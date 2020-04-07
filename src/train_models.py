@@ -23,7 +23,7 @@ def main():
     help="Specify 'gpu' or 'cpu'")
     parser.add_argument("--max_seq_len", default=512, type=int, required=False,
     help="Maximum sequence length for a given input.")
-    parser.add_argument("--batch_size", default=16, type=int, required=False,
+    parser.add_argument("--batch_size", default=8, type=int, required=False,
     help="Batch size.")
     parser.add_argument("--n_epochs", default=3, type=int, required=False,
     help="Number of epochs.")

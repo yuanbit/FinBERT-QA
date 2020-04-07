@@ -17,7 +17,7 @@ DEFAULT_CONFIG = {'model_type': 'bert',
                   'use_default_config': True,
                   'device': 'gpu',
                   'max_seq_len': 512,
-                  'batch_size': 16,
+                  'batch_size': 8,
                   'n_epochs': 3,
                   'lr': 3e-6,
                   'weight_decay': 0.01,
@@ -78,6 +78,7 @@ class PointwiseBERT():
         # Generate training and validation data
         print("\nGenerating training and validation data...")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()
+        print("\nLoading pre-trained BERT model...")
         # Initialize model
         self.model = model
         self.optimizer = optimizer
