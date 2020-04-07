@@ -133,33 +133,32 @@ class train_qa_lstm_model():
     def __init__(self, config):
         # Overwrite config to default
         if config['use_default_config'] == True:
-            print("True!")
-        #     self.config = DEFAULT_CONFIG:
-        # else:
-        #     self.config = config
-        #     # Load training set
-        #     self.train_set = load_pickle(self.config['train_set'])
-        #     # Load validation set
-        #     self.valid_set = load_pickle(self.config['valid_set'])
-        # # Use GPU or CPU
-        # self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
-        # # Maximum sequence length
-        # self.max_seq_len = self.config['max_seq_len']
-        # # Batch size
-        # self.batch_size = self.config['batch_size']
-        # # Number of epochs
-        # self.n_epochs = self.config['n_epochs']
-        # # Margin for hinge loss
-        # self.margin = self.config['margin']
-        #
-        # print("\nGenerating training and validation data...\n")
-        # self.train_dataloader, self.validation_dataloader = self.get_dataloader()
-        # # Initialize model
-        # self.model = QA_LSTM(self.config).to(self.device)
-        # # Use Adam optimizer
-        # self.optimizer = optim.Adam(model.parameters(), lr=self.config['lr'])
-        #
-        # self.train_lstm()
+            self.config = DEFAULT_CONFIG:
+        else:
+            self.config = config
+            # Load training set
+            self.train_set = load_pickle(self.config['train_set'])
+            # Load validation set
+            self.valid_set = load_pickle(self.config['valid_set'])
+        # Use GPU or CPU
+        self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        # Maximum sequence length
+        self.max_seq_len = self.config['max_seq_len']
+        # Batch size
+        self.batch_size = self.config['batch_size']
+        # Number of epochs
+        self.n_epochs = self.config['n_epochs']
+        # Margin for hinge loss
+        self.margin = self.config['margin']
+
+        print("\nGenerating training and validation data...\n")
+        self.train_dataloader, self.validation_dataloader = self.get_dataloader()
+        # Initialize model
+        self.model = QA_LSTM(self.config).to(self.device)
+        # Use Adam optimizer
+        self.optimizer = optim.Adam(model.parameters(), lr=self.config['lr'])
+
+        self.train_lstm()
 
     def hinge_loss(self, pos_sim, neg_sim):
         """
