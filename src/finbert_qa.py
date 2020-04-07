@@ -43,10 +43,13 @@ class BERT_QA():
         if self.bert_model_name == "bert-base":
             model_path = "bert-base-uncase"
         elif self.bert_model_name == "finbert-domain":
+            get_model("finbert-domain")
             model_path = '../fiqa/model/finbert-domain'
         elif self.bert_model_name == "finbert-task":
+            get_model("finbert-task")
             model_path = '../fiqa/model/finbert-task'
         else:
+            get_model("bert-qa")
             model_path = '../fiqa/model/bert-qa'
 
         model = BertForSequenceClassification.from_pretrained(model_path, \
@@ -56,13 +59,14 @@ class BERT_QA():
 
 class PointwiseBERT():
     def __init__(self, config, tokenizer, model, optimizer):
+        self.config = config
         # Overwrite config to default
-        if config['use_default_config'] == False:
+        if self.config['use_default_config'] == False:
             self.train_set = load_pickle(self.config['train_set'])
             # Load validation set
             self.valid_set = load_pickle(self.config['valid_set'])
         # Use GPU or CPU
-        self.device = config['device']
+        self.device = torch.device('cuda' if self.config['device'] == 'gpu' else 'cpu')
         # Maximum sequence length
         self.max_seq_len = config['max_seq_len']
         # Batch size
@@ -396,10 +400,10 @@ class train_bert_model():
         # Use GPU or CPU
         device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         # Load the BERT tokenizer.
-        print('Loading BERT tokenizer...')
+        print('\nLoading BERT tokenizer...\n')
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
         # Initialize model
-        model = BERT_QA(bert_model_name).initialize_model.to(device)
+        model = BERT_QA(bert_model_name).initialize_model().to(device)
         optimizer = AdamW(model.parameters(), lr = config['lr'], \
                           weight_decay=config['weight_decay'])
 
