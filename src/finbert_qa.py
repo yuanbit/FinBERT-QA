@@ -20,7 +20,6 @@ DEFAULT_CONFIG = {'model_type': 'bert',
                   'batch_size': 16,
                   'n_epochs': 3,
                   'lr': 3e-6,
-                  'bert_model_name': 'bert-qa',
                   'weight_decay': 0.01,
                   'num_warmup_steps': 10000}
 
@@ -73,7 +72,7 @@ class PointwiseBERT():
         # Load the BERT tokenizer.
         self.tokenizer = tokenizer
         # Generate training and validation data
-        print("\nGenerating training and validation data...\n")
+        print("\nGenerating training and validation data...")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()
         # Initialize model
         self.model = model
@@ -386,6 +385,9 @@ class train_bert_model():
     Train the fine-tuned BERT model.
     """
     def __init__(self, config):
+        # Pre-trained BERT model name
+        bert_model_name = config['bert_model_name']
+        learning_approach = config['learning_approach']
         # Overwrite config to default
         if config['use_default_config'] == True:
             config = DEFAULT_CONFIG
@@ -393,8 +395,6 @@ class train_bert_model():
             config = config
         # Use GPU or CPU
         device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
-        # Pre-trained BERT model name
-        bert_model_name = config['bert_model_name']
         # Load the BERT tokenizer.
         print('Loading BERT tokenizer...')
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
@@ -404,7 +404,7 @@ class train_bert_model():
                           weight_decay=config['weight_decay'])
 
         # Train and validate model based on learning approach
-        if config['learning_approach'] == 'pointwise':
+        if learning_approach == 'pointwise':
             trainer = PointwiseBERT(config, tokenizer, model, optimizer)
             trainer.train_pointwise()
         else:

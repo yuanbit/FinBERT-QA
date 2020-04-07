@@ -105,8 +105,8 @@ class QA_LSTM(nn.Module):
             answer: Torch tensor of vectorized answer
         """
         # Embedding layers - (batch_size, max_seq_len, emb_dim)
-        question_embedding = self.embedding(q)
-        answer_embedding = self.embedding(a)
+        question_embedding = self.embedding(question)
+        answer_embedding = self.embedding(answer)
 
         # biLSTM - (batch_size, max_seq_len, 2*hidden_size)
         question_lstm, (hidden, cell) = self.lstm(question_embedding)
@@ -115,7 +115,7 @@ class QA_LSTM(nn.Module):
         # Max-pooling - (batch_size, 2*hidden_size)
         # There are n word level biLSTM representations where n is the max_seq_len
         # Use max pooling to generate the best representation
-        question_max_pool = torch.max(question_lstm, 1)[0]
+        question_maxpool = torch.max(question_lstm, 1)[0]
         answer_maxpool = torch.max(answer_lstm, 1)[0]
 
         # Apply dropout
@@ -133,7 +133,7 @@ class train_qa_lstm_model():
     def __init__(self, config):
         # Overwrite config to default
         if config['use_default_config'] == True:
-            self.config = DEFAULT_CONFIG:
+            self.config = DEFAULT_CONFIG
         else:
             self.config = config
             # Load training set
@@ -151,12 +151,12 @@ class train_qa_lstm_model():
         # Margin for hinge loss
         self.margin = self.config['margin']
 
-        print("\nGenerating training and validation data...\n")
+        print("\nGenerating training and validation data...")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()
         # Initialize model
         self.model = QA_LSTM(self.config).to(self.device)
         # Use Adam optimizer
-        self.optimizer = optim.Adam(model.parameters(), lr=self.config['lr'])
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.config['lr'])
 
         self.train_lstm()
 
@@ -185,9 +185,11 @@ class train_qa_lstm_model():
         # Pad each sequence to be the same length to process in batches
         # pad_token = 0
         if len(seq_idx) >= self.max_seq_len:
-            seq = seq_idx[:self.max_seq_len]
+            seq_idx = seq_idx[:self.max_seq_len]
         else:
-            seq += [0]*(self.max_seq_len - len(seq_idx))
+            seq_idx += [0]*(self.max_seq_len - len(seq_idx))
+        seq = seq_idx
+
         return seq
 
     def vectorize(self, seq):
