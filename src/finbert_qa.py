@@ -76,9 +76,9 @@ class PointwiseBERT():
         # Load the BERT tokenizer.
         self.tokenizer = tokenizer
         # Generate training and validation data
-        print("\nGenerating training and validation data...")
+        print("\nGenerating training and validation data...\n")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()
-        print("\nLoading pre-trained BERT model...\n")
+        print("\nLoading pre-trained BERT model...")
         # Initialize model
         self.model = model
         self.optimizer = optimizer
@@ -380,11 +380,8 @@ class PointwiseBERT():
                 str(epoch+1)+ '_pointwise_' + self.config['bert_model_name'] + '.pt')
 
             print("\n\n Epoch {}:".format(epoch+1))
-            print("\t Train Loss: {} | Train Accuracy: \
-                  {}%".format(round(train_loss, 3), round(train_acc*100, 2)))
-            print("\t Validation Loss: {} | Validation Accuracy: \
-                  {}%\n".format(round(valid_loss, 3), round(valid_acc*100, 2)))
-
+            print("\t Train Loss: {} | Train Accuracy: {}%".format(round(train_loss, 3), round(train_acc*100, 2)))
+            print("\t Validation Loss: {} | Validation Accuracy: {}%\n".format(round(valid_loss, 3), round(valid_acc*100, 2)))
 
 class train_bert_model():
     """
@@ -402,7 +399,7 @@ class train_bert_model():
         # Use GPU or CPU
         device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         # Load the BERT tokenizer.
-        print('\nLoading BERT tokenizer...\n')
+        print('\nLoading BERT tokenizer...')
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
         # Initialize model
         model = BERT_QA(bert_model_name).initialize_model().to(device)

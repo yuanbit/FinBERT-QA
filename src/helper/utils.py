@@ -41,7 +41,7 @@ def load_input_data(data_name):
     Arguments:
         data_name: str - type of input data based on the model
     """
-    print("\nLoading input data...\n")
+    print("\nLoading input data...")
     # Download and extract input data
     get_data(data_name)
     # Load data

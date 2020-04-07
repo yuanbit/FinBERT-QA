@@ -91,7 +91,7 @@ def get_model(model_name):
     if not os.path.exists(model_path/"pytorch_model.bin"):
 
         if model_name == "finbert-domain":
-            url = "https://www.dropbox.com/s/6yiye1qdzrnv96e/finbert-domain.zip?dl=1"
+            url = "https://www.dropbox.com/s/3vp2fje2x0hwd84/finbert-domain.zip?dl=1"
         elif model_name == "finbert-task":
             url = "https://www.dropbox.com/s/0vgwzcjt9tx8b1b/finbert-task.zip?dl=1"
         else:
