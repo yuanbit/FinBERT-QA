@@ -49,7 +49,7 @@ class QA_LSTM(nn.Module):
         GloVe embeddings (6B tokens)
 
         Returns:
-            emb_layer: torch embedding layer
+            emb_layer: Torch embedding layer
         """
         print("\nDownloading pre-trained GloVe embeddings...\n")
         # Use GloVe embeddings from torchtext
@@ -86,11 +86,11 @@ class QA_LSTM(nn.Module):
         their distance.
 
         Returns:
-            similarity: torch tensor with cosine similarity score.
+            similarity: Torch tensor with cosine similarity score.
         ----------
         Arguements:
-            question: tensor of vectorized question
-            answer: tensor of vectorized answer
+            question: Torch tensor of vectorized question
+            answer: Torch tensor of vectorized answer
         """
         # Embedding layers - (batch_size, max_seq_len, emb_dim)
         question_embedding = self.embedding(q)
@@ -134,42 +134,23 @@ class train_qa_lstm_model():
         self.train_set = load_pickle(config['train_set'])
         # Load validation set
         self.valid_set = load_pickle(config['valid_set'])
-        # Initialize model
-        model = QA_LSTM(self.config).to(self.device)
-        # Use Adam optimizer
-        optimizer = optim.Adam(model.parameters(), lr=config['lr'])
-
-        # Lowest validation lost
-        best_valid_loss = float('inf')
-        
         print("\nGenerating training and validation data...\n")
-        train_dataloader, validation_dataloader = self.get_dataloader()
+        self.train_dataloader, self.validation_dataloader = self.get_dataloader()
+        # Initialize model
+        self.model = QA_LSTM(self.config).to(self.device)
+        # Use Adam optimizer
+        self.optimizer = optim.Adam(model.parameters(), lr=config['lr'])
 
-        print("\nTraining model...\n")
-        for epoch in range(self.n_epochs):
-            # Evaluate training loss
-            train_loss = self.train(model, train_dataloader, optimizer)
-            # Evaluate validation loss
-            valid_loss = self.validate(model, validation_dataloader)
-
-            # At each epoch, if the validation loss is the best
-            if valid_loss < best_valid_loss:
-                best_valid_loss = valid_loss
-                # Save the parameters of the model
-                torch.save(model.state_dict(), '../fiqa/model/'+str(epoch+1)+'_qa_lstm.pt')
-
-            print("\n\n Epoch {}:".format(epoch+1))
-            print("\t Train Loss: {}".format(round(train_loss, 3)))
-            print("\t Validation Loss: {}\n".format(round(valid_loss, 3)))
+        self.train_lstm()
 
     def hinge_loss(self, pos_sim, neg_sim):
         """
         Returns:
-            loss: tensor with hinge loss value
+            loss: Tensor with hinge loss value
         ----------
         Arguements:
-            pos_sim: tensor with similarity of a question and a positive answer
-            neg_sim: tensor with similarity of a question and a negative answer
+            pos_sim: Tensor with similarity of a question and a positive answer
+            neg_sim: Tensor with similarity of a question and a negative answer
         """
         loss = torch.max(torch.tensor(0, dtype=torch.float).to(self.device), \
                          self.margin - pos_sim + neg_sim)
@@ -196,10 +177,10 @@ class train_qa_lstm_model():
         """Creates vectorized sequence.
 
         Returns:
-            vectorized_seq: list of padded vectorized sequence
+            vectorized_seq: List of padded vectorized sequence
         ----------
         Arguements:
-            seq: list of tokens in a sequence
+            seq: List of tokens in a sequence
         """
         # Map tokens in seq to idx
         seq_idx = [vocab[token] for token in seq]
@@ -212,12 +193,12 @@ class train_qa_lstm_model():
         """Creates input data for model.
 
         Returns:
-            q_input_ids: list of lists of vectorized question sequence
-            pos_input_ids: list of lists of vectorized positve ans sequence
-            neg_input_ids: list of lists of vectorized negative ans sequence
+            q_input_ids: List of lists of vectorized question sequence
+            pos_input_ids: List of lists of vectorized positve ans sequence
+            neg_input_ids: List of lists of vectorized negative ans sequence
         ----------
         Arguements:
-            dataset: list of lists in the form of [qid, [pos ans], [ans cands]]
+            dataset: List of lists in the form of [qid, [pos ans], [ans cands]]
         """
         q_input_ids = []
         pos_input_ids = []
@@ -286,10 +267,10 @@ class train_qa_lstm_model():
         """Trains the model and returns the average loss
 
         Returns:
-            avg_loss: float
+            avg_loss: Float
         ----------
         Arguements:
-            model: torch model
+            model: Torch model
             train_dataloader: DataLoader object
             optimizer: Optimizer object
         """
@@ -327,10 +308,10 @@ class train_qa_lstm_model():
         """Validates the model and returns the average loss
 
         Returns:
-            avg_loss: float
+            avg_loss: Float
         ----------
         Arguements:
-            model: torch model
+            model: Torch model
             validation_dataloader: DataLoader object
         """
         # Cumulated validation loss
@@ -356,3 +337,25 @@ class train_qa_lstm_model():
         avg_loss = valid_loss/len(validation_dataloader)
 
         return avg_loss
+
+    def train_lstm(self):
+        """Train and validate the model and print the average loss and accuracy.
+        """
+        # Lowest validation lost
+        best_valid_loss = float('inf')
+
+        print("\nTraining model...\n")
+        for epoch in range(self.n_epochs):
+            # Evaluate training loss
+            train_loss = self.train(self.model, self.train_dataloader, self.optimizer)
+            # Evaluate validation loss
+            valid_loss = self.validate(self.model, self.validation_dataloader)
+            # At each epoch, if the validation loss is the best
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
+                # Save the parameters of the model
+                torch.save(self.model.state_dict(), '../fiqa/model/'+str(epoch+1)+'_qa_lstm.pt')
+
+            print("\n\n Epoch {}:".format(epoch+1))
+            print("\t Train Loss: {}".format(round(train_loss, 3)))
+            print("\t Validation Loss: {}\n".format(round(valid_loss, 3)))

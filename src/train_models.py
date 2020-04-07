@@ -2,20 +2,20 @@ import argparse
 
 from helper.utils import *
 from qa_lstm import *
+from finbert_qa import *
 
 def main():
     parser = argparse.ArgumentParser()
 
+    # Required arguments
     parser.add_argument("--train_pickle", default=None, type=str, required=True,
     help="Path to training data in .pickle format")
     parser.add_argument("--valid_pickle", default=None, type=str, required=True,
     help="Path to validation data in .pickle format")
     parser.add_argument("--model_type", default=None, type=str, required=True,
     help="Specify model type as 'qa-lstm' or 'bert'")
-    parser.add_argument("--bert_model_name", default=None, type=str, required=True,
-    help="Specify BERT model name to use from 'bert-base', 'finbert-domain', \
-    'finbert-task', 'bert-qa'")
 
+    # Optional arguments
     parser.add_argument("--device", default='gpu', type=str, required=False,
     help="Specify 'gpu' or 'cpu'")
     parser.add_argument("--max_seq_len", default=512, type=int, required=False,
@@ -27,15 +27,24 @@ def main():
     parser.add_argument("--lr", default=3e-6, type=float, required=False,
     help="Number of epochs.")
 
+    # Optional arguments when model_type is 'qa-lstm'
     parser.add_argument("--emb_dim", default=100, type=int, required=False,
-    help="Embedding dimension. Specify only if model type is 'qa_lstm'")
+    help="Embedding dimension. Specify only if model_type is 'qa-lstm'")
     parser.add_argument("--hidden_size", default=256, type=int, required=False,
-    help="Hidden size. Specify only if model type is 'qa_lstm'")
+    help="Hidden size. Specify only if model_type is 'qa-lstm'")
     parser.add_argument("--dropout", default=0.2, type=float, required=False,
-    help="Dropout rate. Specify only if model type is 'qa_lstm'")
+    help="Dropout rate. Specify only if model_type is 'qa-lstm'")
+
+    # Optional arguments when model_type is 'bert'
+    parser.add_argument("--learning_approach", default="pointwise", type=str, \
+                        required=False, help="Learning approach. Specify \
+                        'pointwise' or 'pairwise' only if model_type is 'bert'.")
     parser.add_argument("--margin", default=0.2, type=float, required=False,
     help="Margin for pairwise loss. Specify only if model type is 'qa_lstm' \
     or if 'learning_approach' is pairwise")
+    parser.add_argument("--bert_model_name", default="bert-qa", type=str, required=False,
+    help="Specify BERT model name to use from 'bert-base', 'finbert-domain', \
+    'finbert-task', 'bert-qa'")
     parser.add_argument("--weight_decay", default=0.01, type=float, required=False,
     help="Weight decay. Specify only if model type is 'bert'")
     parser.add_argument("--num_warmup_steps", default=10000, type=int, required=False,
@@ -52,6 +61,7 @@ def main():
         'batch_size': args.batch_size,
         'n_epochs': args.n_epochs,
         'lr': args.lr,
+        'learning_approach': args.learning_approach,
         'emb_dim': args.emb_dim,
         'hidden_size': args.hidden_size,
         'dropout': args.dropout,
@@ -63,8 +73,8 @@ def main():
 
     if config['model_type'] == 'qa-lstm':
         train_qa_lstm_model(config)
-    else:
-        pass
+    elif config['model_type'] == 'bert':
+        train_bert_model(config)
 
 if __name__ == "__main__":
     main()
