@@ -44,7 +44,7 @@ def get_model(model_name):
                 f.write(data)
         t.close()
         if total_size != 0 and t.n != total_size:
-            print("ERROR, something went wrong")
+            print("ERROR, download failed.")
 
         # Extract and delete zip file
         with open(model_path/zip_name, 'rb') as fileobj:

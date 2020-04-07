@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from helper.utils import *
 from qa_lstm import *
@@ -52,8 +53,6 @@ def main():
 
     args = parser.parse_args()
 
-    device = torch.device('cuda' if args.device == 'gpu' else 'cpu')
-
     config = {
         'model_type': args.model_type,
         'device': args.device,
@@ -71,10 +70,15 @@ def main():
         'valid_set': args.valid_pickle
     }
 
+    # TO-DO: Catch error for invalid datasets
+
     if config['model_type'] == 'qa-lstm':
         train_qa_lstm_model(config)
     elif config['model_type'] == 'bert':
         train_bert_model(config)
+    else:
+        print("Please specify 'qa-lstm' or 'bert' for model_type")
+        sys.exit()
 
 if __name__ == "__main__":
     main()

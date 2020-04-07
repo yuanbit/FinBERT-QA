@@ -7,7 +7,7 @@ from torch.nn.functional import softmax
 from transformers import BertTokenizer, BertForSequenceClassification, AdamW, get_linear_schedule_with_warmup, BertConfig
 
 from helper.utils import *
-from download_model import *
+from helper.download_model import *
 
 # Dictionary mapping of docid and qid to raw text
 docid_to_text = load_pickle('../fiqa/data/id_to_text/docid_to_text.pickle')
