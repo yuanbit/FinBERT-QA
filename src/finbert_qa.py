@@ -15,7 +15,7 @@ from helper.evaluate import *
 docid_to_text = load_pickle('../fiqa/data/id_to_text/docid_to_text.pickle')
 qid_to_text = load_pickle('../fiqa/data/id_to_text/qid_to_text.pickle')
 
-DEFAULT_CONFIG = {'model_type': 'bert',
+DEFAULT_POINTWISE_CONFIG = {'model_type': 'bert',
                   'use_default_config': True,
                   'device': 'gpu',
                   'max_seq_len': 512,
@@ -405,7 +405,7 @@ class PairwiseBERT():
         # Margin for loss function
         self.margin = config['margin']
         # Load the BERT tokenizer.
-        self.tokenizer = self.tokenizer
+        self.tokenizer = tokenizer
         # Generate training and validation data
         print("\nGenerating training and validation data...\n")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()

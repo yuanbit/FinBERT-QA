@@ -49,7 +49,7 @@ def main():
               'max_seq_len': args.max_seq_len,
               'use_trained_model': args.use_trained_model,
               'bert_model_name': args.bert_model_name,
-              'bert_finetuned_model': args.model_name,
+              'bert_finetuned_model': args.bert_finetuned_model,
               'model_path': args.model_path,
               'use_rank_pickle': args.use_rank_pickle,
               'device': args.device,

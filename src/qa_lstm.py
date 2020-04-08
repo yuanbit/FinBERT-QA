@@ -64,7 +64,8 @@ class QA_LSTM(nn.Module):
         Returns:
             emb_layer: Torch embedding layer
         """
-        print("\nDownloading pre-trained GloVe embeddings...\n")
+        print("\nInitializing model...")
+        print("\nDownloading pre-trained GloVe embeddings...")
         # Use GloVe embeddings from torchtext
         emb = torchtext.vocab.GloVe("6B", dim=self.emb_dim)
         # Dictionary mapping of word idx to GloVe vectors
@@ -81,7 +82,7 @@ class QA_LSTM(nn.Module):
                 words_found += 1
 
         print("\n")
-        print(words_found, "words are found in GloVe\n")
+        print(words_found, "words are found in GloVe")
         # Convert matrix to tensor
         emb_weights = torch.from_numpy(emb_weights).float()
 
@@ -505,16 +506,18 @@ class evaluate_qa_lstm_model():
             # Load model
             trained_model = self.model.load_state_dict(torch.load(model_path))
 
+            print("\nEvaluating...")
             # Get rank
-            qid_red_rank = self.get_rank(trained_model)
+            qid_pred_rank = self.get_rank(trained_model)
         else:
+            print("\nEvaluating...")
             # Get pre-computed rank
-            qid_red_rank = load_pickle("..fiqa/data/rank/qa-lstm_rank.pickle")
+            qid_pred_rank = load_pickle("../fiqa/data/rank/qa-lstm_rank.pickle")
 
         # Evaluate
         MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank,
                                                           self.test_qid_rel, k)
 
-        print("\n\nAverage nDCG@{} for {} queries: {0:.3f}\n".format(k, num_q, average_ndcg))
-        print("MRR@{} for {} queries: {0:.3f}\n".format(k, num_q, MRR))
-        print("Average Precision@1 for {} queries: {0:.3f}".format(num_q, precision))
+        print("\nAverage nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
+        print("MRR@{0} for {1} queries: {2:.3f}".format(k, num_q, MRR))
+        print("Average Precision@1 for {0} queries: {1:.3f}".format(num_q, precision))
