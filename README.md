@@ -1,5 +1,7 @@
 work in progress....
 
+[Evaluate](#evaluate)
+
 ## Train
 ```
 python3 src/train_models.py  [--model_type MODEL_TYPE] [--use_default_config] \
