@@ -99,3 +99,22 @@ def get_model(model_name):
 
         print("\nDownloading {} model...\n".format(model_name))
         download_zip(url, model_path, zip_name)
+
+def get_trained_model(model_name):
+    # LSTM
+    # https://www.dropbox.com/s/6ohy8r1risxom3e/3_lstm50_128_64_1e3.pt?dl=1
+
+    # Pointwise
+    # https://www.dropbox.com/s/wow4d8n9jn3lgof/2_pointwise50_512_16_3e6.pt?dl=1
+
+    # Pairwise
+    # https://www.dropbox.com/s/k6ey5ez55uslosk/1_pairwisewise50_128_32_3e6_05.pt?dl=1
+
+    # Finbert-domain
+    # https://www.dropbox.com/s/a3h5oszxn6d7azj/2_finbert-domain-50_512_16_3e6.pt?dl=1
+
+    # Finbert-task
+    # https://www.dropbox.com/s/h29fk9xi2cennp7/2_finbert-task-50_512_16_3e6.pt?dl=1
+
+    # Finbert-QA
+    # https://www.dropbox.com/s/12uiuumz4vbqvhk/2_finbert-qa-50_512_16_3e6.pt?dl=1

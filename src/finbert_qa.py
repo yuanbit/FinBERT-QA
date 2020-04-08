@@ -8,6 +8,7 @@ from transformers import BertTokenizer, BertForSequenceClassification, AdamW, ge
 
 from helper.utils import *
 from helper.download import *
+from helper.evaluate import *
 
 # Dictionary mapping of docid and qid to raw text
 docid_to_text = load_pickle('../fiqa/data/id_to_text/docid_to_text.pickle')
@@ -803,7 +804,6 @@ class PairwiseBERT():
             print("\t Train Loss: {} | Train Accuracy: {}%".format(round(train_loss, 3), round(train_acc*100, 2)))
             print("\t Validation Loss: {} | Validation Accuracy: {}%\n".format(round(valid_loss, 3), round(valid_acc*100, 2)))
 
-
 class train_bert_model():
     """
     Train the fine-tuned BERT model.
@@ -834,3 +834,96 @@ class train_bert_model():
         else:
             trainer = PairwiseBERT(config, tokenizer, model, optimizer)
             trainer.train_pairwise()
+
+class evaluate_bert_model():
+    def __init__(self, config):
+        # Pre-trained BERT model name
+        bert_model_name = config['bert_model_name']
+        # Use GPU or CPU
+        device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+
+    def get_rank(model, test_set, qid_rel, max_seq_len):
+        """Re-ranks the candidates answers for each question.
+
+        Returns:
+            qid_pred_rank: Dictionary
+                key - qid
+                value - list of re-ranked candidates
+        -------------------
+        Arguments:
+            model - PyTorch model
+            test_set - List of lists:
+                    Each element is a list contraining
+                    [qid, list of pos docid, list of candidate docid]
+            qid_rel: Dictionary
+                    key - qid
+                    value - list of relevant answer id
+            max_seq_len: int - maximum sequence length
+        """
+        # Initiate empty dictionary
+        qid_pred_rank = {}
+        # Set model to evaluation mode
+        model.eval()
+        # For each element in the test set
+        for i, seq in enumerate(tqdm(test_set)):
+            # question id, list of rel answers, list of candidates
+            qid, label, cands = seq[0], seq[1], seq[2]
+            # Map question id to text
+            q_text = qid_to_text[qid]
+
+            # Convert list to numpy array
+            cands_id = np.array(cands)
+
+            # Empty list for the probability scores of relevancy
+            scores = []
+
+            # For each answer in the candidates
+            for docid in cands:
+
+                # Map the docid to text
+                ans_text = docid_to_text[docid]
+
+                # Create inputs for the model
+                encoded_seq = tokenizer.encode_plus(q_text, ans_text,
+                                                max_length=max_seq_len,
+                                                pad_to_max_length=True,
+                                                return_token_type_ids=True,
+                                                return_attention_mask = True)
+
+                # Numericalized, padded, clipped seq with special tokens
+                input_ids = torch.tensor([encoded_seq['input_ids']]).to(device)
+                # Specify question seq and answer seq
+                token_type_ids = torch.tensor([encoded_seq['token_type_ids']]).to(device)
+                # Sepecify which position is part of the seq which is padded
+                att_mask = torch.tensor([encoded_seq['attention_mask']]).to(device)
+
+                # Don't calculate gradients
+                with torch.no_grad():
+                # Forward pass, calculate logit predictions for each QA pair
+                    outputs = model(input_ids, token_type_ids=token_type_ids, attention_mask=att_mask)
+
+                # Get the predictions
+                logits = outputs[0]
+
+                # Apply activation function
+                pred = softmax(logits, dim=1)
+                # pred = torch.sigmoid(logits)
+
+                # Move logits and labels to CPU
+                pred = pred.detach().cpu().numpy()
+
+                # Append relevant scores to list (where label = 1)
+                scores.append(pred[:,1][0])
+
+            # print(scores)
+
+            # Get the indices of the sorted similarity scores
+            sorted_index = np.argsort(scores)[::-1]
+
+            # Get the list of docid from the sorted indices
+            ranked_ans = cands_id[sorted_index]
+
+            # Dict - key: qid, value: ranked list of docids
+            qid_pred_rank[qid] = ranked_ans
+
+        return qid_pred_rank

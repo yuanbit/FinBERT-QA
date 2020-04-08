@@ -6,17 +6,17 @@ from itertools import islice
 
 def dcg(rels, k):
     """
-    Discounted Cumulative Gain
+    Discounted Cumulative Gain. Computes the cumulated DCG of the top-k
+    relevant docs across all queries.
 
-    Returns the cumulated DCG of the top-k relevant docs across all queries
-
-    cumulated_sum: float
-        Cumulated DCG
+    Returns:
+        cumulated_sum: float - cumulated DCG
     ----------
-    rels: list
-        List of relevant scores of 0 or 1 e.g. [0, 1, 0, 1]
-    k: int
-        Top-k relevant docs
+    Arguments:
+        rels: list
+            List of relevant scores of 0 or 1 e.g. [0, 1, 0, 1]
+        k: int
+            Top-k relevant docs
     """
     cumulated_sum = rels[0]
     for i in range(1, k):
@@ -25,20 +25,19 @@ def dcg(rels, k):
 
 def avg_ndcg(rel_score, k):
     """
-    Average Normalized Discounted Cumulative Gain
+    Average Normalized Discounted Cumulative Gain. Computes the DCG, iDCG, and
+    nDCG for each query and returns the averyage nDCG across all queries.
 
-    Computes the DCG, iDCG, and nDCG for each query and returns the averyage
-    nDCG across all queries
-
-    avg: float
-        Average nDCG
+    Returns:
+        avg: float - average nDCG
     ----------
-    rel_score: dictionary
-        key - question id
-        value - list of relevancy scores with 1 (relevant) and 0 (irrelevant)
-        e.g. {0: [0, 1, 0], 1: [1, 1, 0]}
-    k: int
-        Top-k relevant docs
+    Arguments:
+        rel_score: dictionary
+            key - question id
+            value - list of relevancy scores with 1 (relevant) and 0 (irrelevant)
+            e.g. {0: [0, 1, 0], 1: [1, 1, 0]}
+        k: int
+            Top-k relevant docs
     """
     ndcg_list = []
     for qid, rels in rel_score.items():
@@ -63,26 +62,25 @@ def avg_ndcg(rel_score, k):
 
 def compute_RR(cand_docs, rel_docs, cumulated_reciprocal_rank, rank_pos, k):
     """
-    Computes the reciprocal rank - probability of correctness of rank
+    Computes the reciprocal rank - probability of correctness of rank. Returns
+    the cumulated reciprocal rank across all queries and the positions of the
+    relevant docs in the candidates.
 
-    Returns the cumulated reciprocal rank across all queries and the
-    positions of the relevant docs in the candidates
-
-    cumulated_reciprocal_rank: float
-        Cumulated Reciprocal Rank across all queries
-    rank_pos: list
-        Index of the relevant docs in the candidates
+    Returns:
+        cumulated_reciprocal_rank: float - cumulated Reciprocal Rank across all queries
+        rank_pos: list - index of the relevant docs in the candidates
     ----------
-    cand_docs: list
-        List of ranked docids for a question
-    rel_docs: list
-        List of the relevancy of docids for a question
-    cumulated_reciprocal_rank: int
-        Initial value = 0
-    rank_pos: list
-        Initial list = []
-    k: int
-        Top-k relevant docs
+    Arguments:
+        cand_docs: list
+            List of ranked docids for a question
+        rel_docs: list
+            List of the relevancy of docids for a question
+        cumulated_reciprocal_rank: int
+            Initial value = 0
+        rank_pos: list
+            Initial list = []
+        k: int
+            Top-k relevant docs
     """
 
     for i in range(0, k):
@@ -97,14 +95,16 @@ def compute_RR(cand_docs, rel_docs, cumulated_reciprocal_rank, rank_pos, k):
     return cumulated_reciprocal_rank, rank_pos
 
 def create_qid_pred_rank(test_set):
-    """Returns dictionary of qid and list of candidates from test set.
+    """Creates dictionary of qid and list of candidates from test set.
 
-    qid_pred_rank: dictionary
-        key - qid
-        value - list of candidates
+    Returns:
+        qid_pred_rank: dictionary
+            key - qid
+            value - list of candidates
     ----------
-    test_set: list
-        [[qid, [positive docids], [list of candidates]]]
+    Arguments:
+        test_set: list
+            [[qid, [positive docids], [list of candidates]]]
     """
     qid_pred_rank = {}
 
@@ -113,17 +113,23 @@ def create_qid_pred_rank(test_set):
 
     return qid_pred_rank
 
-
 def evaluate(qid_ranked_docs, qid_rel, k):
     """
-    Evaluate. Returns the MRR@k, average nDCG@k, and average precision@k1
+    Evaluate. Computes the MRR@k, average nDCG@k, and average precision@k1
+
+    Returns:
+        MRR: float
+        average_ndcg: float
+        avg_precision: float
+        r_pos: int
     ----------
-    qid_ranked_docs: dictionary
-        key - qid
-        value - list of cand ans
-    qid_rel:  dinctionary
-        key- qid
-        value - list of relevant ans
+    Arguments:
+        qid_ranked_docs: dictionary
+            key - qid
+            value - list of cand ans
+        qid_rel:  dinctionary
+            key- qid
+            value - list of relevant ans
     """
     cumulated_reciprocal_rank = 0
     num_rel_docs = 0
@@ -165,4 +171,6 @@ def evaluate(qid_ranked_docs, qid_rel, k):
                 num_rel += 1
         precision_at_k.append(num_rel/1)
 
-    return MRR, average_ndcg, mean(precision_at_k), r_pos
+    avg_precision = mean(precision_at_k)
+
+    return MRR, average_ndcg, avg_precision, r_pos

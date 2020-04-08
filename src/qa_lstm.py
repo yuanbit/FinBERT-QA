@@ -9,6 +9,7 @@ import torchtext
 from tqdm import tqdm
 
 from helper.utils import *
+from helper.evaluate import *
 
 # Dictonary with token to id mapping
 vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
@@ -380,3 +381,40 @@ class train_qa_lstm_model():
             print("\n\n Epoch {}:".format(epoch+1))
             print("\t Train Loss: {}".format(round(train_loss, 3)))
             print("\t Validation Loss: {}\n".format(round(valid_loss, 3)))
+
+class evaluate_qa_lstm_model():
+    def __init__(self, config):
+
+    def get_lstm_rank(model, test_set, qid_rel, max_seq_len):
+
+        qid_pred_rank = {}
+
+        model.eval()
+
+        for i, seq in enumerate(tqdm(test_set)):
+
+            ques, pos_ans, cands = seq[0], seq[1], seq[2]
+
+            q_text = qid_to_tokenized_text[ques]
+            q_vec = torch.tensor([vectorize(q_text, vocab, max_seq_len)]).to(device)
+
+            cands_text = [docid_to_tokenized_text[c] for c in cands]
+
+            scores = []
+
+            cands_id = np.array(cands)
+
+            for cand in cands_text:
+                a_vec = torch.tensor([vectorize(cand, vocab, max_seq_len)]).to(device)
+                scores.append(model(q_vec, a_vec).item())
+
+            # Get the indices of the sorted similarity scores
+            sorted_index = np.argsort(scores)[::-1]
+
+            # Get the docid from the sorted indices
+            ranked_ans = cands_id[sorted_index]
+
+            # Dict - key: qid, value: ranked list of docids
+            qid_pred_rank[ques] = ranked_ans
+
+        return qid_pred_rank
