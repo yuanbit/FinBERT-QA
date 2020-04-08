@@ -1,0 +1,39 @@
+python3 src/train_models.py --model_type 'qa-lstm' --use_default_config
+
+python3 src/train_models.py --model_type 'qa-lstm' --train_pickle data/sample/train_toy.pickle --valid_pickle data/sample/valid_toy.pickle \
+--max_seq_len 256 --batch_size 128 --n_epochs 6 --lr 0.001
+
+python3 src/train_models.py --model_type bert --use_default_config --bert_model_name 'bert-qa' --learning_approach pairwise
+
+python3 src/train_models.py --model_type 'bert' --train_pickle data/sample/train_sample.pickle --valid_pickle data/sample/valid_sample.pickle \
+--bert_model_name 'bert-base' --learning_approach 'pairwise' \
+--max_seq_len 8 --batch_size 128 --n_epochs 1 --lr 2e-5
+
+----------------------------------------------------------------------------------
+# LSTM
+
+python3 src/evaluate_models.py --test_pickle data/processed_data/test_set_50.pickle --label_pickle data/labels/qid_rel_test.pickle --model_type 'qa-lstm' --use_rank_pickle
+
+python3 src/evaluate_models.py --test_pickle data/sample/test_sample.pickle \
+--label_pickle data/sample/test_label_sample.pickle --model_type 'qa-lstm' \
+--max_seq_len 128 --use_trained_model
+
+python3 src/evaluate_models.py --test_pickle data/sample/test_sample.pickle \
+--label_pickle data/sample/test_label_sample.pickle --model_type 'qa-lstm' \
+--max_seq_len 128 --model_path 'model/trained/qa-lstm/3_lstm50_128_64_1e3.pt'
+
+# BERT
+
+python3 src/evaluate_models.py --test_pickle data/processed_data/test_set_50.pickle --label_pickle data/labels/qid_rel_test.pickle --model_type 'bert' --bert_finetuned_model 'finbert-qa' --use_rank_pickle
+
+python3 src/evaluate_models.py --test_pickle data/sample/test_sample.pickle \
+--label_pickle data/sample/test_label_sample.pickle --model_type 'bert' \
+--max_seq_len 512 --bert_finetuned_model 'finbert-task' --use_trained_model
+
+python3 src/evaluate_models.py --test_pickle data/sample/test_sample.pickle \
+--label_pickle data/sample/test_label_sample.pickle --model_type 'bert' \
+--max_seq_len 512 --model_path 'model/trained/finbert-task/2_finbert-task-50_512_16_3e6.pt'
+
+
+
+
