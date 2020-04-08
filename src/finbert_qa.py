@@ -15,7 +15,7 @@ from helper.evaluate import *
 docid_to_text = load_pickle('../fiqa/data/id_to_text/docid_to_text.pickle')
 qid_to_text = load_pickle('../fiqa/data/id_to_text/qid_to_text.pickle')
 
-DEFAULT_POINTWISE_CONFIG = {'model_type': 'bert',
+DEFAULT_CONFIG = {'model_type': 'bert',
                   'use_default_config': True,
                   'device': 'gpu',
                   'max_seq_len': 512,
@@ -837,14 +837,30 @@ class train_bert_model():
 
 class evaluate_bert_model():
     def __init__(self, config):
+        self.config = config
         # Pre-trained BERT model name
-        bert_model_name = config['bert_model_name']
+        self.bert_model_name = config['bert_model_name']
+        # Load test set
+        self.test_set = load_pickle(self.config['test_set'])
+        # Labels
+        self.test_qid_rel = load_pickle(self.config['labels'])
         # Use GPU or CPU
-        device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        # Maximum sequence length
+        self.max_seq_len = self.config['max_seq_len']
+        # Fine-tuned BERT model name
+        self.bert_finetuned_model = self.config['bert_finetuned_model']
+
         print('\nLoading BERT tokenizer...')
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+        # Initialize model
+        print("\nLoading pre-trained BERT model...")
+        self.model = BERT_QA(self.bert_model_name).initialize_model().to(self.device)
 
-    def get_rank(model, test_set, qid_rel, max_seq_len):
+        # Evaluate model
+        self.evaluate_model()
+
+    def get_rank(self, model):
         """Re-ranks the candidates answers for each question.
 
         Returns:
@@ -867,65 +883,90 @@ class evaluate_bert_model():
         # Set model to evaluation mode
         model.eval()
         # For each element in the test set
-        for i, seq in enumerate(tqdm(test_set)):
+        for i, seq in enumerate(tqdm(self.test_set)):
             # question id, list of rel answers, list of candidates
             qid, label, cands = seq[0], seq[1], seq[2]
             # Map question id to text
             q_text = qid_to_text[qid]
-
             # Convert list to numpy array
             cands_id = np.array(cands)
-
             # Empty list for the probability scores of relevancy
             scores = []
 
             # For each answer in the candidates
             for docid in cands:
-
                 # Map the docid to text
                 ans_text = docid_to_text[docid]
-
                 # Create inputs for the model
                 encoded_seq = self.tokenizer.encode_plus(q_text, ans_text,
-                                                max_length=max_seq_len,
+                                                max_length=self.max_seq_len,
                                                 pad_to_max_length=True,
                                                 return_token_type_ids=True,
                                                 return_attention_mask = True)
 
                 # Numericalized, padded, clipped seq with special tokens
-                input_ids = torch.tensor([encoded_seq['input_ids']]).to(device)
+                input_ids = torch.tensor([encoded_seq['input_ids']]).to(self.device)
                 # Specify question seq and answer seq
-                token_type_ids = torch.tensor([encoded_seq['token_type_ids']]).to(device)
+                token_type_ids = torch.tensor([encoded_seq['token_type_ids']]).to(self.device)
                 # Sepecify which position is part of the seq which is padded
-                att_mask = torch.tensor([encoded_seq['attention_mask']]).to(device)
+                att_mask = torch.tensor([encoded_seq['attention_mask']]).to(self.device)
 
                 # Don't calculate gradients
                 with torch.no_grad():
                 # Forward pass, calculate logit predictions for each QA pair
-                    outputs = model(input_ids, token_type_ids=token_type_ids, attention_mask=att_mask)
+                    outputs = model(input_ids,
+                                    token_type_ids=token_type_ids,
+                                    attention_mask=att_mask)
 
                 # Get the predictions
                 logits = outputs[0]
-
                 # Apply activation function
                 pred = softmax(logits, dim=1)
-                # pred = torch.sigmoid(logits)
-
                 # Move logits and labels to CPU
                 pred = pred.detach().cpu().numpy()
-
                 # Append relevant scores to list (where label = 1)
                 scores.append(pred[:,1][0])
-
-            # print(scores)
-
             # Get the indices of the sorted similarity scores
             sorted_index = np.argsort(scores)[::-1]
-
             # Get the list of docid from the sorted indices
             ranked_ans = cands_id[sorted_index]
-
             # Dict - key: qid, value: ranked list of docids
             qid_pred_rank[qid] = ranked_ans
 
         return qid_pred_rank
+
+    def evaluate_model(self):
+        """Prints the nDCG@10, MRR@10, Precision@1
+        """
+        k = 10
+        # Number of questions
+        num_q = len(self.test_set)
+
+        # If not use pre-computed rank
+        if self.config['use_rank_pickle'] == False:
+            # If use trained model
+            if self.config['use_trained_model'] == True:
+                # Download model
+                model_name = get_trained_model(self.bert_finetuned_model)
+                model_path = "../fiqa/model/trained/" + \
+                             self.bert_finetuned_model + model_name
+            else:
+                model_path = self.config['model_path']
+            # Load model
+            self.model.load_state_dict(torch.load(model_path), strict=False)
+            print("\nEvaluating...")
+            # Get rank
+            qid_pred_rank = self.get_rank(self.model)
+        else:
+            print("\nEvaluating...\n")
+            # Get pre-computed rank
+            rank_path = "../fiqa/data/rank/" + self.bert_finetuned_model + "_rank.pickle"
+            qid_pred_rank = load_pickle(rank_path)
+
+        # Evaluate
+        MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank,
+                                                          self.test_qid_rel, k)
+
+        print("\nAverage nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
+        print("MRR@{0} for {1} queries: {2:.3f}".format(k, num_q, MRR))
+        print("Average Precision@1 for {0} queries: {1:.3f}".format(num_q, precision))

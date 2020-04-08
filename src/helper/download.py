@@ -141,3 +141,5 @@ def get_trained_model(model_name):
         download_file(url, model_path, filename)
     else:
         pass
+
+    return filename

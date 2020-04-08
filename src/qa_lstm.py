@@ -497,13 +497,12 @@ class evaluate_qa_lstm_model():
             # If use trained model
             if self.config['use_trained_model'] == True:
                 # Download model
-                get_trained_model("qa-lstm")
-                model_path = "../fiqa/model/trained/qa-lstm/3_lstm50_128_64_1e3.pt"
+                model_name = get_trained_model("qa-lstm")
+                model_path = "../fiqa/model/trained/qa-lstm/" + model_name
             else:
                 model_path = self.config['model_path']
             # Load model
             self.model.load_state_dict(torch.load(model_path), strict=False)
-
             print("\nEvaluating...")
             # Get rank
             qid_pred_rank = self.get_rank(self.model)
