@@ -379,42 +379,142 @@ class train_qa_lstm_model():
                 torch.save(self.model.state_dict(), '../fiqa/model/'+str(epoch+1)+'_qa_lstm.pt')
 
             print("\n\n Epoch {}:".format(epoch+1))
-            print("\t Train Loss: {}".format(round(train_loss, 3)))
-            print("\t Validation Loss: {}\n".format(round(valid_loss, 3)))
+            print("\t Train Loss: {0:.3f}".format(train_loss))
+            print("\t Validation Loss: {0:.3f}\n".format(valid_loss))
 
 class evaluate_qa_lstm_model():
+    """Evaluate the QA-LSTM model
+    """
     def __init__(self, config):
+        self.config = config
+        # Load test set
+        self.test_set = load_pickle(self.config['test_set'])
+        # Labels
+        self.test_qid_rel = load_pickle(self.config['labels'])
+        # Use GPU or CPU
+        self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        # Maximum sequence length
+        self.max_seq_len = self.config['max_seq_len']
+        # Initialize model
+        self.model = QA_LSTM(self.config).to(self.device)
+        # Evaluate model
+        self.evaluate_model()
 
-    def get_lstm_rank(model, test_set, qid_rel, max_seq_len):
+    def pad_seq(self, seq_idx):
+        """Creates padded or truncated sequence.
 
+        Returns:
+            seq: list of padded vectorized sequence
+        ----------
+        Arguements:
+            seq_idx: tensor with similarity of a question and a positive answer
+        """
+        # Pad each sequence to be the same length to process in batches
+        # pad_token = 0
+        if len(seq_idx) >= self.max_seq_len:
+            seq_idx = seq_idx[:self.max_seq_len]
+        else:
+            seq_idx += [0]*(self.max_seq_len - len(seq_idx))
+        seq = seq_idx
+
+        return seq
+
+    def vectorize(self, seq):
+        """Creates vectorized sequence.
+
+        Returns:
+            vectorized_seq: List of padded vectorized sequence
+        ----------
+        Arguements:
+            seq: List of tokens in a sequence
+        """
+        # Map tokens in seq to idx
+        seq_idx = [vocab[token] for token in seq]
+        # Pad seq idx
+        vectorized_seq = self.pad_seq(seq_idx)
+
+        return vectorized_seq
+
+    def get_rank(self, model):
+        """Re-ranks the answer candidates per question using trained model.
+
+        Returns:
+            qid_pred_rank: Dictionary
+                    key - qid
+                    value - List of re-ranked candidate answers
+        -------------------
+        Arguments:
+            model - Trained PyTorch model
+            test_set - List of lists
+                    Each element is a list contraining
+                    [qid, list of pos docid, list of candidate docid]
+            qid_rel: Dictionary
+                    key - qid
+                    value - List of relevant answer ids
+        """
+        # Dictionary - key: qid, value: ranked list of docids
         qid_pred_rank = {}
-
+        # Set model to evaluation mode
         model.eval()
-
+        # For each sample in the test set
         for i, seq in enumerate(tqdm(test_set)):
-
+            # Extract input data
             ques, pos_ans, cands = seq[0], seq[1], seq[2]
-
+            # Tokenize and vectorize question
             q_text = qid_to_tokenized_text[ques]
-            q_vec = torch.tensor([vectorize(q_text, vocab, max_seq_len)]).to(device)
-
+            q_vec = torch.tensor([self.vectorize(q_text, vocab, \
+                                 self.max_seq_len)]).to(self.device)
+            # Tokenize candidate answers
             cands_text = [docid_to_tokenized_text[c] for c in cands]
-
-            scores = []
-
             cands_id = np.array(cands)
-
+            # List to store similarity score of QA pair
+            scores = []
+            # For each candidate answer
             for cand in cands_text:
-                a_vec = torch.tensor([vectorize(cand, vocab, max_seq_len)]).to(device)
+                # Vectorize the answers
+                a_vec = torch.tensor([self.vectorize(cand, vocab, \
+                                     self.max_seq_len)]).to(self.device)
+                # Compute similarity score of QA pair and add to scores
                 scores.append(model(q_vec, a_vec).item())
 
-            # Get the indices of the sorted similarity scores
+            # Get the indices of the sorted (descending) similarity scores
             sorted_index = np.argsort(scores)[::-1]
-
-            # Get the docid from the sorted indices
+            # Get the cand ans docid from the sorted indices
             ranked_ans = cands_id[sorted_index]
-
-            # Dict - key: qid, value: ranked list of docids
+            # Set the qid keys to the list of re-ranked docids
             qid_pred_rank[ques] = ranked_ans
 
         return qid_pred_rank
+
+    def evaluate_model(self):
+        """Prints the nDCG@10, MRR@10, Precision@1
+        """
+        k = 10
+        # Number of questions
+        num_q = len(self.test_set)
+
+        # If not use pre-computed rank
+        if self.config['use_rank_pickle'] == False:
+            # If use trained model
+            if self.config['use_trained_model'] == True:
+                # Download model
+                get_trained_model("qa-lstm")
+                model_path = "..fiqa/model/trained/qa-lstm/3_lstm50_128_64_1e3.pt"
+            else:
+                model_path = self.config['model_path']
+            # Load model
+            trained_model = self.model.load_state_dict(torch.load(model_path))
+
+            # Get rank
+            qid_red_rank = self.get_rank(trained_model)
+        else:
+            # Get pre-computed rank
+            qid_red_rank = load_pickle("..fiqa/data/rank/qa-lstm_rank.pickle")
+
+        # Evaluate
+        MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank,
+                                                          self.test_qid_rel, k)
+
+        print("\n\nAverage nDCG@{} for {} queries: {0:.3f}\n".format(k, num_q, average_ndcg))
+        print("MRR@{} for {} queries: {0:.3f}\n".format(k, num_q, MRR))
+        print("Average Precision@1 for {} queries: {0:.3f}".format(num_q, precision))
