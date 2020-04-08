@@ -13,8 +13,8 @@ def main():
     help="Specify model type as 'qa-lstm' or 'bert'")
 
     # Optional arguments
-    parser.add_argument("--use_default_config", default=False, \
-                        action="store_true", help="Use default configuration")
+        parser.add_argument("--use_default_config", default=False, \
+                        action="store_true", help="Use default data and configuration")
     parser.add_argument("--train_pickle", default=None, type=str, required=False,\
                         help="Path to training data in .pickle format")
     parser.add_argument("--valid_pickle", default=None, type=str, required=False,\

@@ -20,6 +20,7 @@ DEFAULT_CONFIG = {'model_type': 'bert',
                   'batch_size': 8,
                   'n_epochs': 3,
                   'lr': 3e-6,
+                  'margin': 0.5,
                   'weight_decay': 0.01,
                   'num_warmup_steps': 10000}
 
@@ -164,6 +165,7 @@ class PointwiseBERT():
             train_dataloader: DataLoader object
             validation_dataloader: DataLoader object
         """
+        # Use default data
         if self.config['use_default_config'] == True:
             train_input, train_type_id, train_att_mask, \
             train_label, valid_input, valid_type_id, \
@@ -383,6 +385,425 @@ class PointwiseBERT():
             print("\t Train Loss: {} | Train Accuracy: {}%".format(round(train_loss, 3), round(train_acc*100, 2)))
             print("\t Validation Loss: {} | Validation Accuracy: {}%\n".format(round(valid_loss, 3), round(valid_acc*100, 2)))
 
+class PairwiseBERT():
+    def __init__(self, config, tokenizer, model, optimizer):
+        self.config = config
+        # Overwrite config to default
+        if self.config['use_default_config'] == False:
+            self.train_set = load_pickle(self.config['train_set'])
+            # Load validation set
+            self.valid_set = load_pickle(self.config['valid_set'])
+        # Use GPU or CPU
+        self.device = torch.device('cuda' if self.config['device'] == 'gpu' else 'cpu')
+        # Maximum sequence length
+        self.max_seq_len = config['max_seq_len']
+        # Batch size
+        self.batch_size = config['batch_size']
+        # Number of epochs
+        self.n_epochs = config['n_epochs']
+        # Margin for loss function
+        self.margin = config['margin']
+        # Load the BERT tokenizer.
+        self.tokenizer = tokenizer
+        # Generate training and validation data
+        print("\nGenerating training and validation data...\n")
+        self.train_dataloader, self.validation_dataloader = self.get_dataloader()
+        print("\nLoading pre-trained BERT model...")
+        # Initialize model
+        self.model = model
+        self.optimizer = optimizer
+        # Total number of training steps is number of batches * number of epochs.
+        total_steps = len(self.train_dataloader) * self.n_epochs
+        # Create a schedule with a learning rate that decreases linearly
+        # after linearly increasing during a warmup period
+        self.scheduler = get_linear_schedule_with_warmup(self.optimizer, \
+                    num_warmup_steps = config['num_warmup_steps'], \
+                    num_training_steps = total_steps)
+
+    def get_input_data(self, dataset):
+        """Creates input parameters for training and validation.
+
+        Returns:
+            pos_input_ids: List of lists
+                    Each element contains a list of padded/truncated numericalized
+                    tokens of the positive QA sequences
+            pos_type_ids: List of lists
+                    Each element contains a list of segment token indices to
+                    indicate first (question) and second (answer) parts of the inputs.
+            pos_masks: List of lists
+                    Each element contains a list of mask values to avoid
+                    performing attention on padding token indices.
+            pos_labels: List of 1's
+            neg_input_ids: List of lists
+                    Each element contains a list of padded/truncated numericalized
+                    tokens of the negative QA sequences
+            neg_type_ids: List of lists
+                    Each element contains a list of segment token indices to
+                    indicate first (question) and second (answer) parts of the inputs.
+            neg_masks: List of lists
+                    Each element contains a list of mask values to avoid
+                    performing attention on padding token indices.
+            neg_labels: List of 0's
+        -----------------
+        Arguements:
+            dataset: List of lists in the form of [qid, [pos ans], [ans cands]]
+        """
+        pos_input_ids = []
+        neg_input_ids = []
+
+        pos_type_ids = []
+        neg_type_ids = []
+
+        pos_masks = []
+        neg_masks = []
+
+        pos_labels = []
+        neg_labels = []
+
+        for i, seq in enumerate(tqdm(dataset)):
+            qid, ans_labels, cands = seq[0], seq[1], seq[2]
+            # Get a list of negative candidate answers
+            filtered_cands = list(set(cands)-set(ans_labels))
+            # Select a positive answer from the labels
+            pos_docid = random.choice(ans_labels)
+            # Map question id to text
+            q_text = qid_to_text[qid]
+            # For each negative answer
+            for neg_docid in filtered_cands:
+                # Map the docid to text
+                pos_ans_text = docid_to_text[pos_docid]
+                neg_ans_text = docid_to_text[neg_docid]
+                # Encode positive QA pair
+                pos_encoded_seq = tokenizer.encode_plus(q_text, pos_ans_text,
+                                                    max_length=self.max_seq_len,
+                                                    pad_to_max_length=True,
+                                                    return_token_type_ids=True,
+                                                    return_attention_mask = True)
+                # Encode negative QA pair
+                neg_encoded_seq = tokenizer.encode_plus(q_text, neg_ans_text,
+                                                    max_length=self.max_seq_len,
+                                                    pad_to_max_length=True,
+                                                    return_token_type_ids=True,
+                                                    return_attention_mask = True)
+                # Get parameters
+                pos_input_id = pos_encoded_seq['input_ids']
+                pos_type_id = pos_encoded_seq['token_type_ids']
+                pos_mask = pos_encoded_seq['attention_mask']
+
+                neg_input_id = neg_encoded_seq['input_ids']
+                neg_type_id = neg_encoded_seq['token_type_ids']
+                neg_mask = neg_encoded_seq['attention_mask']
+
+                pos_input_ids.append(pos_input_id)
+                pos_type_ids.append(pos_type_id)
+                pos_masks.append(pos_mask)
+                pos_labels.append(1)
+
+                neg_input_ids.append(neg_input_id)
+                neg_type_ids.append(neg_type_id)
+                neg_masks.append(neg_mask)
+                neg_labels.append(0)
+
+        return pos_input_ids, pos_type_ids, pos_masks, pos_labels, \
+               neg_input_ids, neg_type_ids, neg_masks, neg_labels
+
+    def get_dataloader(self):
+        """Creates train and validation DataLoaders with input_ids,
+        token_type_ids, att_masks, and labels
+
+        Returns:
+            train_dataloader: DataLoader object
+            validation_dataloader: DataLoader object
+        """
+        # Use default data
+        if self.config['use_default_config'] == True:
+            train_pos_input, train_pos_type_id, train_pos_mask, \
+            train_pos_label, train_neg_input, train_neg_type_id, \
+            train_neg_mask, train_neg_label, valid_pos_input, \
+            valid_pos_type_id, valid_pos_mask, valid_pos_label, \
+            valid_neg_input, valid_neg_type_id, valid_neg_mask, \
+            valid_neg_label = load_input_data("pairwise-bert")
+        else:
+            # Create training input parameters
+            train_pos_input, train_pos_type_id, train_pos_mask, \
+            train_pos_label, train_neg_input, train_neg_type_id, \
+            train_neg_mask, train_neg_label = self.get_input_data(self.train_set)
+            # Create validation input parameters
+            valid_pos_input, valid_pos_type_id, valid_pos_mask, \
+            valid_pos_label, valid_neg_input, valid_neg_type_id, \
+            valid_neg_mask, valid_neg_label = self.get_input_data(self.valid_set)
+
+        # Convert all train inputs and labels into torch tensors
+        train_pos_inputs = torch.tensor(train_pos_input)
+        train_pos_type_ids = torch.tensor(train_pos_type_id)
+        train_pos_masks = torch.tensor(train_pos_mask)
+        train_pos_labels = torch.tensor(train_pos_label)
+        train_neg_inputs = torch.tensor(train_neg_input)
+        train_neg_type_ids = torch.tensor(train_neg_type_id)
+        train_neg_masks = torch.tensor(train_neg_mask)
+        train_neg_labels = torch.tensor(train_neg_label)
+
+        # Create the DataLoader for our training set.
+        train_data = TensorDataset(train_pos_inputs, train_pos_type_ids, \
+                                   train_pos_masks, train_pos_labels, \
+                                   train_neg_inputs, train_neg_type_ids, \
+                                   train_neg_masks, train_neg_labels)
+        train_sampler = RandomSampler(train_data)
+        train_dataloader = DataLoader(train_data, sampler=train_sampler, \
+                                      batch_size=self.batch_size)
+
+        # Convert all validation inputs and labels into torch tensors
+        valid_pos_inputs = torch.tensor(valid_pos_input)
+        valid_pos_type_ids = torch.tensor(valid_pos_type_id)
+        valid_pos_masks = torch.tensor(valid_pos_mask)
+        valid_pos_labels = torch.tensor(valid_pos_label)
+        valid_neg_inputs = torch.tensor(valid_neg_input)
+        valid_neg_type_ids = torch.tensor(valid_neg_type_id)
+        valid_neg_masks = torch.tensor(valid_neg_mask)
+        valid_neg_labels = torch.tensor(valid_neg_label)
+
+        # Create the DataLoader for our validation set.
+        validation_data = TensorDataset(valid_pos_inputs, valid_pos_type_ids, \
+                                        valid_pos_masks, valid_pos_labels, \
+                                        valid_neg_inputs, valid_neg_type_ids, \
+                                        valid_neg_masks, valid_neg_labels)
+        validation_sampler = SequentialSampler(validation_data)
+        validation_dataloader = DataLoader(validation_data, \
+                                           sampler=validation_sampler, \
+                                           batch_size=self.batch_size)
+
+        return train_dataloader, validation_dataloader
+
+    def get_accuracy(self, preds, labels):
+        """Compute the accuracy of binary predictions.
+
+        Returns:
+            accuracy: float
+        -----------------
+        Arguments:
+            preds: Numpy list with two columns of probabilities for each label
+            labels: List of labels
+        """
+        # Get the label (column) with the higher probability
+        predictions = np.argmax(preds, axis=1).flatten()
+        labels = labels.flatten()
+        # Compute accuracy
+        accuracy = np.sum(predictions == labels) / len(labels)
+
+        return accuracy
+
+    def pairwise_loss(self, pos_scores, neg_scores):
+        """Pairwise loss introduced in https://arxiv.org/pdf/1905.07588.pdf
+
+        Returns:
+            loss: Torch tensor of floats
+        -----------------
+        Arguements:
+            pos_scores: Torch tensor of positive QA pair probabilies
+            neg_scores: Torch tensor of negative QA pair probabilies
+        """
+        cross_entropy_loss = -torch.log(pos_scores) - torch.log(1 - neg_scores)
+
+        hinge_loss = torch.max(torch.tensor(0, dtype=torch.float).to(device), \
+                               self.margin - pos_scores + neg_scores)
+
+        loss = (0.5 * cross_entropy_loss + 0.5 * hinge_loss)
+
+        return loss
+
+    def train(self, model, train_dataloader, optimizer, scheduler):
+        """Trains the model and returns the average loss and accuracy.
+
+        Returns:
+            avg_loss: Float
+            avg_acc: Float
+        ----------
+        Arguements:
+            model: Torch model
+            train_dataloader: DataLoader object
+            optimizer: Optimizer object
+            scheduler: Scheduler object
+        """
+        # Reset the loss and accuracy for each epoch
+        total_loss = 0
+        num_steps = 0
+        train_accuracy = 0
+        # Set model in training mode
+        model.train()
+        # For each batch of training data
+        for step, batch in enumerate(tqdm(train_dataloader)):
+            # Get input tensors and move to gpu:
+            pos_input = batch[0].to(device)
+            pos_type_id = batch[1].to(device)
+            pos_mask = batch[2].to(device)
+            pos_labels = batch[3].to(device)
+            neg_input = batch[4].to(device)
+            neg_type_id = batch[5].to(device)
+            neg_mask = batch[6].to(device)
+            neg_labels = batch[7].to(device)
+
+            # Zero gradients
+            model.zero_grad()
+            # Compute predictinos for postive and negative QA pairs
+            pos_outputs = model(pos_input,
+                                token_type_ids=pos_type_id,
+                                attention_mask=pos_mask,
+                                labels=pos_labels)
+            neg_outputs = model(neg_input,
+                                token_type_ids=neg_type_id,
+                                attention_mask=neg_mask,
+                                labels=neg_labels)
+
+            # Get the logits from the model for positive and negative QA pairs
+            pos_logits = pos_outputs[1]
+            neg_logits = neg_outputs[1]
+
+            # Get the column of the relevant scores and apply activation function
+            pos_scores = softmax(pos_logits, dim=1)[:,1]
+            neg_scores = softmax(neg_logits, dim=1)[:,1]
+
+            # Compute pairwise loss and get the mean of each batch
+            loss = self.pairwise_loss(pos_scores, neg_scores).mean()
+
+            # Move logits and labels to CPU
+            p_logits = pos_logits.detach().cpu().numpy()
+            p_labels = pos_labels.to('cpu').numpy()
+            n_logits = neg_logits.detach().cpu().numpy()
+            n_labels = neg_labels.to('cpu').numpy()
+
+            # Calculate the accuracy for each batch
+            tmp_pos_accuracy = self.get_accuracy(p_logits, p_labels)
+            tmp_neg_accuracy = self.get_accuracy(n_logits, n_labels)
+
+            # Accumulate the total accuracy.
+            train_accuracy += tmp_pos_accuracy
+            train_accuracy += tmp_neg_accuracy
+
+            # Track the number of batches (2 for pos and neg accuracies)
+            num_steps += 2
+
+            # Accumulate the training loss over all of the batches
+            total_loss += loss.item()
+
+            # Perform a backward pass to calculate the gradients.
+            loss.backward()
+
+            # Clip the norm of the gradients to 1.0.
+            # This is to help prevent the "exploding gradients" problem.
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+
+            # Update parameters and take a step using the computed gradient.
+            optimizer.step()
+
+            # Update scheduler
+            scheduler.step()
+
+        # Calculate the average loss over the training data.
+        avg_loss = total_loss / len(train_dataloader)
+        # Compute accuracy for each epoch
+        avg_acc = train_accuracy/num_steps
+
+        return avg_loss, avg_acc
+
+    def validate(self, model, validation_dataloader):
+        """Validates the model and returns the average loss and accuracy.
+
+        Returns:
+            avg_loss: Float
+            avg_acc: Float
+        ----------
+        Arguements:
+            model: Torch model
+            validation_dataloader: DataLoader object
+        """
+        # Set model in evaluation mode
+        model.eval()
+        # Tracking variables
+        total_loss = 0
+        num_steps = 0
+        eval_accuracy = 0
+
+        # Evaluate data for one epoch
+        for batch in tqdm(validation_dataloader):
+            # Add batch to GPU
+            batch = tuple(t.to(device) for t in batch)
+            # Unpack the inputs from our dataloader
+            pos_input, pos_type_id, pos_mask, pos_labels, \
+            neg_input, neg_type_id, neg_mask, neg_labels = batch
+
+            # Don't compute and store gradients
+            with torch.no_grad():
+                # Compute predictinos for postive and negative QA pairs
+                pos_outputs = model(pos_input,
+                                    token_type_ids=pos_type_id,
+                                    attention_mask=pos_mask,
+                                    labels=pos_labels)
+                neg_outputs = model(neg_input,
+                                    token_type_ids=neg_type_id,
+                                    attention_mask=neg_mask,
+                                    labels=neg_labels)
+
+                # Get logits
+                pos_logits = pos_outputs[1]
+                neg_logits = neg_outputs[1]
+
+                # Apply activation function
+                pos_scores = softmax(pos_logits, dim=1)[:,1]
+                neg_scores = softmax(neg_logits, dim=1)[:,1]
+
+            loss = self.pairwise_loss(pos_scores, neg_scores).mean()
+
+            # Move logits and labels to CPU
+            p_logits = pos_logits.detach().cpu().numpy()
+            p_labels = pos_labels.to('cpu').numpy()
+            n_logits = neg_logits.detach().cpu().numpy()
+            n_labels = neg_labels.to('cpu').numpy()
+
+            # Calculate the accuracy for this batch of test sentences.
+            tmp_pos_accuracy = self.get_accuracy(p_logits, p_labels)
+            tmp_neg_accuracy = self.get_accuracy(n_logits, n_labels)
+
+            # Accumulate the total accuracy.
+            eval_accuracy += tmp_pos_accuracy
+            eval_accuracy += tmp_neg_accuracy
+
+            # Track the number of batches
+            num_steps += 2
+            # Cumulate loss
+            total_loss += loss.item()
+        # Compute average loss and accuracy
+        avg_loss = total_loss / len(validation_dataloader)
+        avg_acc = eval_accuracy/num_steps
+
+        return avg_loss, avg_acc
+
+    def train_pairwise(self):
+        """Train and validate the model and print the average loss and accuracy.
+        """
+        # Lowest validation lost
+        best_valid_loss = float('inf')
+
+        print("\nTraining model...\n")
+        for epoch in range(self.n_epochs):
+            # Evaluate training loss
+            train_loss, train_acc = self.train(self.model, \
+                                               self.train_dataloader, \
+                                               self.optimizer, \
+                                               self.scheduler)
+            # Evaluate validation loss
+            valid_loss, valid_acc = self.validate(self.model, \
+                                                  self.validation_dataloader)
+            # At each epoch, if the validation loss is the best
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
+                torch.save(self.model.state_dict(), '../fiqa/model/' + \
+                str(epoch+1)+ '_pairwise_' + self.config['bert_model_name'] + '.pt')
+
+            print("\n\n Epoch {}:".format(epoch+1))
+            print("\t Train Loss: {} | Train Accuracy: {}%".format(round(train_loss, 3), round(train_acc*100, 2)))
+            print("\t Validation Loss: {} | Validation Accuracy: {}%\n".format(round(valid_loss, 3), round(valid_acc*100, 2)))
+
+
 class train_bert_model():
     """
     Train the fine-tuned BERT model.
@@ -411,4 +832,5 @@ class train_bert_model():
             trainer = PointwiseBERT(config, tokenizer, model, optimizer)
             trainer.train_pointwise()
         else:
-            pass
+            trainer = PairwiseBERT(config, tokenizer, model, optimizer)
+            trainer.train_pairwise()
