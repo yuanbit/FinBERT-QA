@@ -88,7 +88,7 @@ python3 src/train_models.py --model_type 'qa-lstm' \
 --lr 0.001
 ```
 ## Evaluate
-### Example - Evaluate FinBERT-QA
+### Example - Evaluate with fine-tuned model (FinBERT-QA)
 ```
 python3 src/evaluate_models.py --test_pickle data/processed_data/test_set_50.pickle \
 --label_pickle data/labels/qid_rel_test.pickle \
@@ -97,3 +97,12 @@ python3 src/evaluate_models.py --test_pickle data/processed_data/test_set_50.pic
 --use_trained_model \
 --bert_finetuned_model 'finbert-qa' 
 ```
+### Example - Evaluate with pre-computed ranking
+```
+python3 src/evaluate_models.py --test_pickle data/processed_data/test_set_50.pickle 
+--label_pickle data/labels/qid_rel_test.pickle 
+--model_type 'bert' 
+--bert_finetuned_model 'finbert-qa' 
+--use_rank_pickle
+```
+
