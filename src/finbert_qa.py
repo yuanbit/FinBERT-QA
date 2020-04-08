@@ -634,14 +634,14 @@ class PairwiseBERT():
         # For each batch of training data
         for step, batch in enumerate(tqdm(train_dataloader)):
             # Get input tensors and move to gpu:
-            pos_input = batch[0].to(device)
-            pos_type_id = batch[1].to(device)
-            pos_mask = batch[2].to(device)
-            pos_labels = batch[3].to(device)
-            neg_input = batch[4].to(device)
-            neg_type_id = batch[5].to(device)
-            neg_mask = batch[6].to(device)
-            neg_labels = batch[7].to(device)
+            pos_input = batch[0].to(self.device)
+            pos_type_id = batch[1].to(self.device)
+            pos_mask = batch[2].to(self.device)
+            pos_labels = batch[3].to(self.device)
+            neg_input = batch[4].to(self.device)
+            neg_type_id = batch[5].to(self.device)
+            neg_mask = batch[6].to(self.device)
+            neg_labels = batch[7].to(self.device)
 
             # Zero gradients
             model.zero_grad()
@@ -727,7 +727,7 @@ class PairwiseBERT():
         # Evaluate data for one epoch
         for batch in tqdm(validation_dataloader):
             # Add batch to GPU
-            batch = tuple(t.to(device) for t in batch)
+            batch = tuple(t.to(self.device) for t in batch)
             # Unpack the inputs from our dataloader
             pos_input, pos_type_id, pos_mask, pos_labels, \
             neg_input, neg_type_id, neg_mask, neg_labels = batch

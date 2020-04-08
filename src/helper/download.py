@@ -4,7 +4,7 @@ import requests
 from pathlib import Path
 from tqdm import tqdm
 
-def download_file(url, path, file_name, zip=False):
+def download_file(url, path, filename, zip=False):
     """Downloads and extracts zip file.
     ----------
     Arguments:
