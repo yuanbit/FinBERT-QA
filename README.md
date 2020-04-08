@@ -48,8 +48,8 @@ DEFAULT_CONFIG = {'model_type': 'bert',
 ### Example - Train custom fine-tuned BERT models
 ```
 python3 src/train_models.py --model_type 'bert' \
---train_pickle data/sample/train_toy.pickle \
---valid_pickle data/sample/valid_toy.pickle \
+--train_pickle data/sample/train_sample.pickle \
+--valid_pickle data/sample/valid_sample.pickle \
 --bert_model_name 'finbert-domain' \
 --learning_approach 'pointwise' \
 --max_seq_len 64 \
@@ -80,10 +80,20 @@ DEFAULT_CONFIG = {'model_type': 'qa-lstm',
 ### Example - Train custom QA-LSTM
 ```
 python3 src/train_models.py --model_type 'qa-lstm' \
---train_pickle data/sample/train_toy.pickle \
---valid_pickle data/sample/valid_toy.pickle \
+--train_pickle data/sample/train_sample.pickle \
+--valid_pickle data/sample/valid_sample.pickle \
 --max_seq_len 256 \
 --batch_size 128 \
 --n_epochs 1 \
 --lr 0.001
+```
+## Evaluate
+### Example - Evaluate FinBERT-QA
+```
+python3 src/evaluate_models.py --test_pickle data/processed_data/test_set_50.pickle \
+--label_pickle data/labels/qid_rel_test.pickle \
+--model_type 'bert' \
+--max_seq_len 512 \
+--use_trained_model \
+--bert_finetuned_model 'finbert-qa' 
 ```
