@@ -81,8 +81,8 @@ class QA_LSTM(nn.Module):
                 emb_weights[idx] = emb[token]
                 words_found += 1
 
-        print("\n")
-        print(words_found, "words are found in GloVe")
+        #print("\n")
+        #print(words_found, "words are found in GloVe")
         # Convert matrix to tensor
         emb_weights = torch.from_numpy(emb_weights).float()
 
@@ -458,13 +458,12 @@ class evaluate_qa_lstm_model():
         # Set model to evaluation mode
         model.eval()
         # For each sample in the test set
-        for i, seq in enumerate(tqdm(test_set)):
+        for i, seq in enumerate(tqdm(self.test_set)):
             # Extract input data
             ques, pos_ans, cands = seq[0], seq[1], seq[2]
             # Tokenize and vectorize question
             q_text = qid_to_tokenized_text[ques]
-            q_vec = torch.tensor([self.vectorize(q_text, vocab, \
-                                 self.max_seq_len)]).to(self.device)
+            q_vec = torch.tensor([self.vectorize(q_text)]).to(self.device)
             # Tokenize candidate answers
             cands_text = [docid_to_tokenized_text[c] for c in cands]
             cands_id = np.array(cands)
@@ -473,8 +472,7 @@ class evaluate_qa_lstm_model():
             # For each candidate answer
             for cand in cands_text:
                 # Vectorize the answers
-                a_vec = torch.tensor([self.vectorize(cand, vocab, \
-                                     self.max_seq_len)]).to(self.device)
+                a_vec = torch.tensor([self.vectorize(cand)]).to(self.device)
                 # Compute similarity score of QA pair and add to scores
                 scores.append(model(q_vec, a_vec).item())
 
@@ -500,17 +498,17 @@ class evaluate_qa_lstm_model():
             if self.config['use_trained_model'] == True:
                 # Download model
                 get_trained_model("qa-lstm")
-                model_path = "..fiqa/model/trained/qa-lstm/3_lstm50_128_64_1e3.pt"
+                model_path = "../fiqa/model/trained/qa-lstm/3_lstm50_128_64_1e3.pt"
             else:
                 model_path = self.config['model_path']
             # Load model
-            trained_model = self.model.load_state_dict(torch.load(model_path))
+            self.model.load_state_dict(torch.load(model_path), strict=False)
 
             print("\nEvaluating...")
             # Get rank
-            qid_pred_rank = self.get_rank(trained_model)
+            qid_pred_rank = self.get_rank(self.model)
         else:
-            print("\nEvaluating...")
+            print("\nEvaluating...\n")
             # Get pre-computed rank
             qid_pred_rank = load_pickle("../fiqa/data/rank/qa-lstm_rank.pickle")
 
