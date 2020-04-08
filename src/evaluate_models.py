@@ -15,8 +15,6 @@ def main():
                         help="Path to label data in .pickle format")
     parser.add_argument("--model_type", default=None, type=str, required=True,
     help="Specify model type as 'qa-lstm' or 'bert'")
-    parser.add_argument("--max_seq_len", default=None, type=int, required=True,
-    help="Maximum sequence length for a sequence.")
 
     # Optional arguments
     parser.add_argument("--use_trained_model", default=False, \
@@ -32,6 +30,8 @@ def main():
                         action="store_true", help="Use pre-computed rank.")
     parser.add_argument("--device", default='gpu', type=str, required=False,
     help="Specify 'gpu' or 'cpu'")
+    parser.add_argument("--max_seq_len", default=None, type=int, required=False,
+    help="Maximum sequence length for a sequence.")
 
     # Optional arguments when model_type is 'qa-lstm'
     parser.add_argument("--emb_dim", default=100, type=int, required=False,
@@ -46,13 +46,13 @@ def main():
     config = {'test_set': args.test_pickle,
               'labels': args.label_pickle,
               'model_type': args.model_type,
-              'max_seq_len': args.max_seq_len,
               'use_trained_model': args.use_trained_model,
               'bert_model_name': args.bert_model_name,
               'bert_finetuned_model': args.bert_finetuned_model,
               'model_path': args.model_path,
               'use_rank_pickle': args.use_rank_pickle,
               'device': args.device,
+              'max_seq_len': args.max_seq_len,
               'emb_dim': args.emb_dim,
               'hidden_size': args.hidden_size,
               'dropout': args.dropout}
