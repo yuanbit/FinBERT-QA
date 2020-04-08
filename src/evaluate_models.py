@@ -17,21 +17,21 @@ def main():
     help="Specify model type as 'qa-lstm' or 'bert'")
     parser.add_argument("--max_seq_len", default=None, type=int, required=True,
     help="Maximum sequence length for a sequence.")
-    parser.add_argument("--bert_model_name", default="bert-qa", type=str, required=True, \
-    help="Specify BERT model name from bert-base', 'finbert-domain', 'finbert-task', 'bert-qa'")
 
     # Optional arguments
-    parser.add_argument("--device", default='gpu', type=str, required=False,
-    help="Specify 'gpu' or 'cpu'")
     parser.add_argument("--use_trained_model", default=False, \
                         action="store_true", \
                         help="Use already fine-tuned model.")
+    parser.add_argument("--bert_model_name", default="bert-qa", type=str, required=False, \
+    help="Specify BERT model name from bert-base', 'finbert-domain', 'finbert-task', 'bert-qa'")
     parser.add_argument("--bert_finetuned_model", default=None, type=str, required=False,
     help="Specify the name of the fine-tuned model from bert-pointwise', 'bert-pairwise', 'finbert-domain', 'finbert-task', 'finbert-qa'")
     parser.add_argument("--model_path", default=None, type=str, required=False,
     help="Specify model path if use_trained_model is not used")
     parser.add_argument("--use_rank_pickle", default=False, \
                         action="store_true", help="Use pre-computed rank.")
+    parser.add_argument("--device", default='gpu', type=str, required=False,
+    help="Specify 'gpu' or 'cpu'")
 
     # Optional arguments when model_type is 'qa-lstm'
     parser.add_argument("--emb_dim", default=100, type=int, required=False,
@@ -47,12 +47,12 @@ def main():
               'labels': args.label_pickle,
               'model_type': args.model_type,
               'max_seq_len': args.max_seq_len,
-              'bert_model_name': args.bert_model_name,
-              'device': args.device,
               'use_trained_model': args.use_trained_model,
-              'model_path': args.model_path,
+              'bert_model_name': args.bert_model_name,
               'bert_finetuned_model': args.model_name,
+              'model_path': args.model_path,
               'use_rank_pickle': args.use_rank_pickle,
+              'device': args.device,
               'emb_dim': args.emb_dim,
               'hidden_size': args.hidden_size,
               'dropout': args.dropout}
