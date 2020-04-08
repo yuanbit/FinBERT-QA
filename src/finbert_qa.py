@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import numpy as np
+import random
 import torch
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
@@ -43,7 +44,7 @@ class BERT_QA():
             model: Torch model
         """
         if self.bert_model_name == "bert-base":
-            model_path = "bert-base-uncase"
+            model_path = "bert-base-uncased"
         elif self.bert_model_name == "finbert-domain":
             get_model("finbert-domain")
             model_path = '../fiqa/model/finbert-domain'
@@ -80,7 +81,6 @@ class PointwiseBERT():
         # Generate training and validation data
         print("\nGenerating training and validation data...\n")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()
-        print("\nLoading pre-trained BERT model...")
         # Initialize model
         self.model = model
         self.optimizer = optimizer
@@ -405,11 +405,10 @@ class PairwiseBERT():
         # Margin for loss function
         self.margin = config['margin']
         # Load the BERT tokenizer.
-        self.tokenizer = tokenizer
+        self.tokenizer = self.tokenizer
         # Generate training and validation data
         print("\nGenerating training and validation data...\n")
         self.train_dataloader, self.validation_dataloader = self.get_dataloader()
-        print("\nLoading pre-trained BERT model...")
         # Initialize model
         self.model = model
         self.optimizer = optimizer
@@ -475,13 +474,13 @@ class PairwiseBERT():
                 pos_ans_text = docid_to_text[pos_docid]
                 neg_ans_text = docid_to_text[neg_docid]
                 # Encode positive QA pair
-                pos_encoded_seq = tokenizer.encode_plus(q_text, pos_ans_text,
+                pos_encoded_seq = self.tokenizer.encode_plus(q_text, pos_ans_text,
                                                     max_length=self.max_seq_len,
                                                     pad_to_max_length=True,
                                                     return_token_type_ids=True,
                                                     return_attention_mask = True)
                 # Encode negative QA pair
-                neg_encoded_seq = tokenizer.encode_plus(q_text, neg_ans_text,
+                neg_encoded_seq = self.tokenizer.encode_plus(q_text, neg_ans_text,
                                                     max_length=self.max_seq_len,
                                                     pad_to_max_length=True,
                                                     return_token_type_ids=True,
@@ -605,7 +604,7 @@ class PairwiseBERT():
         """
         cross_entropy_loss = -torch.log(pos_scores) - torch.log(1 - neg_scores)
 
-        hinge_loss = torch.max(torch.tensor(0, dtype=torch.float).to(device), \
+        hinge_loss = torch.max(torch.tensor(0, dtype=torch.float).to(self.device), \
                                self.margin - pos_scores + neg_scores)
 
         loss = (0.5 * cross_entropy_loss + 0.5 * hinge_loss)
@@ -823,6 +822,7 @@ class train_bert_model():
         print('\nLoading BERT tokenizer...')
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
         # Initialize model
+        print("\nLoading pre-trained BERT model...")
         model = BERT_QA(bert_model_name).initialize_model().to(device)
         optimizer = AdamW(model.parameters(), lr = config['lr'], \
                           weight_decay=config['weight_decay'])
@@ -841,6 +841,8 @@ class evaluate_bert_model():
         bert_model_name = config['bert_model_name']
         # Use GPU or CPU
         device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        print('\nLoading BERT tokenizer...')
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
     def get_rank(model, test_set, qid_rel, max_seq_len):
         """Re-ranks the candidates answers for each question.
@@ -884,7 +886,7 @@ class evaluate_bert_model():
                 ans_text = docid_to_text[docid]
 
                 # Create inputs for the model
-                encoded_seq = tokenizer.encode_plus(q_text, ans_text,
+                encoded_seq = self.tokenizer.encode_plus(q_text, ans_text,
                                                 max_length=max_seq_len,
                                                 pad_to_max_length=True,
                                                 return_token_type_ids=True,
