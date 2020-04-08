@@ -55,6 +55,7 @@ class BERT_QA():
             get_model("bert-qa")
             model_path = '../fiqa/model/bert-qa'
 
+        print("\nLoading pre-trained BERT model...")
         model = BertForSequenceClassification.from_pretrained(model_path, \
                                                               cache_dir=None, \
                                                               num_labels=2)
@@ -822,7 +823,6 @@ class train_bert_model():
         print('\nLoading BERT tokenizer...')
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
         # Initialize model
-        print("\nLoading pre-trained BERT model...")
         model = BERT_QA(bert_model_name).initialize_model().to(device)
         optimizer = AdamW(model.parameters(), lr = config['lr'], \
                           weight_decay=config['weight_decay'])
@@ -949,12 +949,12 @@ class evaluate_bert_model():
                 # Download model
                 model_name = get_trained_model(self.bert_finetuned_model)
                 model_path = "../fiqa/model/trained/" + \
-                             self.bert_finetuned_model + model_name
+                             self.bert_finetuned_model + "/" + model_name
             else:
                 model_path = self.config['model_path']
             # Load model
             self.model.load_state_dict(torch.load(model_path), strict=False)
-            print("\nEvaluating...")
+            print("\nEvaluating...\n")
             # Get rank
             qid_pred_rank = self.get_rank(self.model)
         else:
@@ -967,6 +967,6 @@ class evaluate_bert_model():
         MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank,
                                                           self.test_qid_rel, k)
 
-        print("\nAverage nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
+        print("Average nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
         print("MRR@{0} for {1} queries: {2:.3f}".format(k, num_q, MRR))
         print("Average Precision@1 for {0} queries: {1:.3f}".format(num_q, precision))

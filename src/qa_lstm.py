@@ -503,7 +503,7 @@ class evaluate_qa_lstm_model():
                 model_path = self.config['model_path']
             # Load model
             self.model.load_state_dict(torch.load(model_path), strict=False)
-            print("\nEvaluating...")
+            print("\nEvaluating...\n")
             # Get rank
             qid_pred_rank = self.get_rank(self.model)
         else:
