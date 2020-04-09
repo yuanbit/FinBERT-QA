@@ -11,6 +11,10 @@ from tqdm import tqdm
 from helper.utils import *
 from helper.evaluate import *
 
+# Set the random seed manually for reproducibility.
+torch.backends.cudnn.deterministic = True
+torch.manual_seed(1234)
+
 # Dictonary with token to id mapping
 vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
 # Dictonary with qid to tokenized text mapping

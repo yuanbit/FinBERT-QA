@@ -1,0 +1,16 @@
+seq = test_set[12]
+Question:
+	What is a good open source Windows finance software
+
+Answer Re-ranker
+
+Answer:
+	Check the Financial section in this list of Open Source Software
+
+Answer Retriever
+
+Answer:
+	Long time Quicken user, but I have Bootcamp on my Mac, and one reason is so I can run Quicken Windows. That's one solution. You didn't mention what version of the Mac OS you're running, but Bootcamp is one alternative if you have (or can purchase) a Windows license. Be advised, Bootcamp 4, which is available with OS 10.7 (Lion) and OS 10.8 (Mountain Lion), officially supports Windows 7 only. Quicken running under Bootcamp isn't perfect, but it's better than any Mac version, and Quicken 2013 has a mobile app that allows you to view your data & enter transactions via your mobile. The Mac Version of Quicken has been panned by users. I do use Windows for work-related stuff, so I have a reason for running Windows besides using Quicken. I've read that Intuit has a market share of more than 70% in the personal finance software sector, and at this point it seems pretty clear that they are not interested in pursuing a larger share via Mac users. So if we ever see a highly functional version of Quicken for the Mac OS, it won't be any time soon. I've not used other products, but there are many reviews out there which rank them, and some consistently come to the front. Top 10 Reviews Mac Personal Finance Software 2013; WeRockYourWeb Personal Finance Software Rankings includes many Web-based alternatives; Personally, I'm not real enthusiastic about posting my personal financial data on someone's Web site. I have nothing to hide, but I just can't get comfortable with cloud-based personal finance software providers that are combing through my data, Google-like, to generate revenue. Too, it seems an unnecessary risk giving a third party a list of all my account numbers, user names, and passwords. I know that information is out there, if one has the right sort of access, but to my way of thinking, using a cloud-based personal finance software application makes it more out there.
+
+label:
+	Have you tried others on Wikipedia's list?

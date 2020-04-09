@@ -6,10 +6,17 @@ from torch.nn import CrossEntropyLoss
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from torch.nn.functional import softmax
 from transformers import BertTokenizer, BertForSequenceClassification, AdamW, get_linear_schedule_with_warmup, BertConfig
+from pyserini.search import pysearch
 
 from helper.utils import *
 from helper.download import *
 from helper.evaluate import *
+
+# Set the random seed manually for reproducibility.
+torch.backends.cudnn.deterministic = True
+torch.manual_seed(1234)
+
+FIQA_INDEX = "../fiqa/retriever/lucene-index-fiqa"
 
 # Dictionary mapping of docid and qid to raw text
 docid_to_text = load_pickle('../fiqa/data/id_to_text/docid_to_text.pickle')
@@ -870,13 +877,6 @@ class evaluate_bert_model():
         -------------------
         Arguments:
             model - PyTorch model
-            test_set - List of lists:
-                    Each element is a list contraining
-                    [qid, list of pos docid, list of candidate docid]
-            qid_rel: Dictionary
-                    key - qid
-                    value - list of relevant answer id
-            max_seq_len: int - maximum sequence length
         """
         # Initiate empty dictionary
         qid_pred_rank = {}
@@ -970,3 +970,107 @@ class evaluate_bert_model():
         print("Average nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
         print("MRR@{0} for {1} queries: {2:.3f}".format(k, num_q, MRR))
         print("Average Precision@1 for {0} queries: {1:.3f}".format(num_q, precision))
+
+class FinBERT_QA():
+    """Financial answer retriever based on fine-tuned BERT model.
+    """
+    def __init__(self, config):
+        self.config = config
+        self.searcher = pysearch.SimpleSearcher(FIQA_INDEX)
+        self.max_seq_len = 512
+        # Use GPU or CPU
+        self.device = torch.device('cuda')
+        print('\nLoading BERT tokenizer...')
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+        # Initialize model
+        print("\nLoading pre-trained BERT model...")
+        self.model = BERT_QA('bert-qa').initialize_model().to(self.device)
+
+        self.user_input = self.config['user_input']
+        self.k = self.config['k']
+
+        self.search()
+
+    def predict(self, model, q_text, cands):
+        """Re-ranks the candidates answers for each question.
+
+        Returns:
+            ranked_ans: list of re-ranked candidate docids
+            sorted_scores: list of relevancy scores of the answers
+        -------------------
+        Arguments:
+            model - PyTorch model
+            q_text - str - query
+            cands -List of retrieved candidate docids
+        """
+        self.model.eval()
+        # Convert list to numpy array
+        cands_id = np.array(cands)
+        # Empty list for the probability scores of relevancy
+        scores = []
+        # For each answer in the candidates
+        for docid in tqdm(cands):
+            # Map the docid to text
+            ans_text = docid_to_text[docid]
+            # Create inputs for the model
+            encoded_seq = tokenizer.encode_plus(q_text, ans_text,
+                                                max_length=self.max_seq_len,
+                                                pad_to_max_length=True,
+                                                return_token_type_ids=True,
+                                                return_attention_mask = True)
+
+            # Numericalized, padded, clipped seq with special tokens
+            input_ids = torch.tensor([encoded_seq['input_ids']]).to(self.device)
+            # Specify question seq and answer seq
+            token_type_ids = torch.tensor([encoded_seq['token_type_ids']]).to(self.device)
+            # Sepecify which position is part of the seq which is padded
+            att_mask = torch.tensor([encoded_seq['attention_mask']]).to(self.device)
+            # Don't calculate gradients
+            with torch.no_grad():
+                # Forward pass, calculate logit predictions for each QA pair
+                outputs = model(input_ids, token_type_ids=token_type_ids, attention_mask=att_mask)
+            # Get the predictions
+            logits = outputs[0]
+            # Apply activation function
+            pred = softmax(logits, dim=1)
+            # Move logits and labels to CPU
+            pred = pred.detach().cpu().numpy()
+            # Append relevant scores to list (where label = 1)
+            scores.append(pred[:,1][0])
+            # Get the indices of the sorted similarity scores
+            sorted_index = np.argsort(scores)[::-1]
+            # Get the list of docid from the sorted indices
+            ranked_ans = list(cands_id[sorted_index])
+            sorted_scores = list(np.around(sorted(scores, reverse=True),decimals=3))
+
+        return ranked_ans, sorted_scores
+
+    def search(self):
+        """Search engine based on FinBERT_QA.
+        Retrieves and re-ranks the answer candidates given a query.
+        Renders the top-k answers for a query.
+        """
+        if self.user_input == True:
+            # Ask the user for a keyword query.
+            self.query = input("\nPlease enter your question: ")
+        else:
+            self.query = self.config['query']
+
+        hits = self.searcher.search(self.query, k=50)
+        self.cands = []
+        # Print the first 10 hits:
+        for i in range(0, len(hits)):
+            self.cands.append(int(hits[i].docid))
+
+        # Download model
+        model_name = get_trained_model("finbert-qa")
+        model_path = "../fiqa/model/trained/finbert-qa/" + model_name
+        # Load model
+        self.model.load_state_dict(torch.load(model_path), strict=False)
+
+        self.rank, self.scores = self.prediction(self.model, self.query, self.cands)
+
+        print("Question: \n\t{}\n".format(query))
+        print("Top-{} Answers: \n".format(self.k))
+        for i in range(0, self.k):
+            print("\t{}. {}\n".format(i+1, docid_to_text[rank[i]]))

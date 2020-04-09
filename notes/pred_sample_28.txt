@@ -1,0 +1,16 @@
+seq = test_set[28]
+Question:
+	Where do large corporations store their massive amounts of cash?
+
+Answer Re-ranker
+
+Answer:
+	It's worth pointing out that a bulk of the bond market is institutional investors (read: large corporations and countries). For individuals, it's very easy to just put your cash in a checking account.  Checking accounts are insured and non-volatile.  But what happens when you're GE or Apple or Panama?   You can't just flop a couple billion dollars in to a Chase checking account and call it a day.  Although, you still need a safe place to store money that won't be terribly volatile.  GE can buy a billion dollars of treasury bonds.  Many companies need tremendous amounts of collateral on hand, amounts far in excess of the capacity of a checking account; those funds are stored in treasuries of some sort. Separately, a treasury bond is not a substitute investment for an S&P index fund.  For individuals they are two totally different investments with totally different characteristics.  The only reason an individual investor should compare the return of the S&P against the readily available yield of treasuries is to ensure the expected return of an equity investment can sufficiently pay for the additional risk.
+
+Answer Retriever
+
+Answer:
+	Some large merchants do not give discounts for cash payments as this does not work out any cheaper for them, vs Credit Card payments. In Credit Card typically fees given to all the 3 parties (Merchant bank, Issuer Bank and Visa) would be around 3%. If cash payment is made, and the amounts are large (say at Walmart / K-Mart they have to deposit such cash at Banks, Have a provision to Storing Cash at Stores, People to count the cash. So essentially they will have to pay for Cash Officer to count,  Bigger Safe to store, Transport & Security & Insurance to take Cash to Bank Plus Banks charge around 1% charge for counting the large cash being deposited. This cash would be in local branch where as the operations are centralized and Walmart/K-Mart would need the money in central account, it takes time to get it transferred to a central account, and there is a fee charged by Bank to do this automatically. On the other hand, smaller merchants would like cash as they are operated stand-alone and most of their purchases are also cash. Hence they would tend to give a discount for cash payment if any.
+
+label:
+	Short term investments, treasuries, current accounts.
