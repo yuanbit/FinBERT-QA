@@ -15,7 +15,7 @@ from helper.download import *
 from helper.evaluate import *
 
 # Set Java path for PySerini
-os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
+# os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
 
 # Set the random seed manually for reproducibility.
 torch.backends.cudnn.deterministic = True
