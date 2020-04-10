@@ -1061,7 +1061,7 @@ class FinBERT_QA():
 
         hits = self.searcher.search(self.query, k=50)
         self.cands = []
-        # Print the first 10 hits:
+        
         for i in range(0, len(hits)):
             self.cands.append(int(hits[i].docid))
 
