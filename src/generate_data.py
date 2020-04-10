@@ -17,6 +17,7 @@ from helper.utils import *
 # Set Java path for PySerini
 # os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
 
+# Lucene indexer
 FIQA_INDEX = "../fiqa/retriever/lucene-index-fiqa"
 
 def split_label(qid_docid):
@@ -144,11 +145,22 @@ def split_question(train_label, test_label, valid_label, queries):
     return train_questions, test_questions, valid_questions
 
 def create_dataset(question_df, labels, cands_size):
+    """Retrieves the top-k candidate answers for a question and
+    creates a list of lists of the dataset containing the question id,
+    list of relevant answer ids, and the list of answer candidates
+
+    Returns:
+        dataset: list of list in the form [qid, [pos ans], [ans candidates]]
+    ----------
+    Arguments:
+        question_df: Dataframe containing the qid and question text
+        labels: Dictonary containing the qid to text map
+        cands_size: int - number of candidates to retrieve
+    """
     dataset = []
-    k = 50
-
+    # Calls retriever
     searcher = pysearch.SimpleSearcher(FIQA_INDEX)
-
+    # For each question
     for i, row in question_df.iterrows():
         qid = row['qid']
         tmp = []
@@ -156,7 +168,7 @@ def create_dataset(question_df, labels, cands_size):
         tmp.append(qid)
         # Append list of relevant docs
         tmp.append(labels[qid])
-
+        # Retrieves answer candidates
         cands = []
         query = row['question']
         query = re.sub('[£€§]', '', query)
@@ -164,13 +176,26 @@ def create_dataset(question_df, labels, cands_size):
 
         for docid in range(0, len(hits)):
             cands.append(int(hits[docid].docid))
-
         # Append candidate answers
         tmp.append(cands)
         dataset.append(tmp)
+
     return dataset
 
 def get_dataset(query_path, labels_path, cands_size):
+    """Splits the dataset into train, validation, and test set and creates
+    the dataset form for training, validation, and testing.
+
+    Returns:
+        train_set: list of list in the form [qid, [pos ans], [ans candidates]]
+        valid_set: list of list in the form [qid, [pos ans], [ans candidates]]
+        test_set: list of list in the form [qid, [pos ans], [ans candidates]]
+    ----------
+    Arguments:
+        query_path: str - path containing a list of qid and questions
+        labels_path: str - path containing a list of qid and relevant docid
+        cands_size: int - number of candidates to retrieve
+    """
     # Question id and Question text
     queries = load_questions_to_df(query_path)
     # Question id and Answer id pair
@@ -211,7 +236,6 @@ def main():
     if len(sys.argv) < 4:
         print("Usage: python3 src/generate_data.py <query_path> <label_path>")
         sys.exit()
-
 
     train_set, valid_set, test_set = get_dataset(args.query_path, \
                                                  args.label_path, \

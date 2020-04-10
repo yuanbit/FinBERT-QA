@@ -2,6 +2,12 @@ python3 src/generate_data.py --query_path data/raw/FiQA_train_question_final.tsv
 --label_path data/raw/FiQA_train_question_doc_final.tsv
 
 --------------------------------------------------------------------------
+python3 src/predict.py --user_input --k 5
+
+python3 src/predict.py --query 'What kind of stocks should I invest?" --k 10
+
+
+--------------------------------------------------------------------------
 python3 src/train_models.py --model_type 'qa-lstm' --use_default_config
 
 python3 src/train_models.py --model_type 'qa-lstm' --train_pickle data/sample/train_toy.pickle --valid_pickle data/sample/valid_toy.pickle \
