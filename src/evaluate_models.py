@@ -11,8 +11,6 @@ def main():
     # Required arguments
     parser.add_argument("--test_pickle", default=None, type=str, required=True,\
                         help="Path to test data in .pickle format")
-    parser.add_argument("--label_pickle", default=None, type=str, required=True,\
-                        help="Path to label data in .pickle format")
     parser.add_argument("--model_type", default=None, type=str, required=True,
     help="Specify model type as 'qa-lstm' or 'bert'")
 

@@ -21,6 +21,8 @@ vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
 qid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
 # Dictionary with docid to tokenized text mapping
 docid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
+# Labels
+labels = load_pickle('../fiqa/data/data_pickle/labels.pickle')
 
 DEFAULT_CONFIG = {'model_type': 'qa-lstm',
                   'use_default_config': True,
@@ -394,8 +396,6 @@ class evaluate_qa_lstm_model():
         self.config = config
         # Load test set
         self.test_set = load_pickle(self.config['test_set'])
-        # Labels
-        self.test_qid_rel = load_pickle(self.config['labels'])
         # Use GPU or CPU
         self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         # Maximum sequence length
@@ -511,13 +511,12 @@ class evaluate_qa_lstm_model():
             # Get rank
             qid_pred_rank = self.get_rank(self.model)
         else:
-            print("\nEvaluating...\n")
+            print("\nEvaluating...")
             # Get pre-computed rank
             qid_pred_rank = load_pickle("../fiqa/data/rank/qa-lstm_rank.pickle")
 
         # Evaluate
-        MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank,
-                                                          self.test_qid_rel, k)
+        MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank, labels, k)
 
         print("\nAverage nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
         print("MRR@{0} for {1} queries: {2:.3f}".format(k, num_q, MRR))

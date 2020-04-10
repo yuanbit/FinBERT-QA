@@ -21,11 +21,13 @@ from helper.evaluate import *
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(1234)
 
+# Lucene index
 FIQA_INDEX = "../fiqa/retriever/lucene-index-fiqa"
-
 # Dictionary mapping of docid and qid to raw text
 docid_to_text = load_pickle('../fiqa/data/id_to_text/docid_to_text.pickle')
 qid_to_text = load_pickle('../fiqa/data/id_to_text/qid_to_text.pickle')
+# Labels
+labels = load_pickle('../fiqa/data/data_pickle/labels.pickle')
 
 DEFAULT_CONFIG = {'model_type': 'bert',
                   'use_default_config': True,
@@ -854,8 +856,6 @@ class evaluate_bert_model():
         self.bert_model_name = config['bert_model_name']
         # Load test set
         self.test_set = load_pickle(self.config['test_set'])
-        # Labels
-        self.test_qid_rel = load_pickle(self.config['labels'])
         # Use GPU or CPU
         self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         # Maximum sequence length
@@ -968,8 +968,7 @@ class evaluate_bert_model():
             qid_pred_rank = load_pickle(rank_path)
 
         # Evaluate
-        MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank,
-                                                          self.test_qid_rel, k)
+        MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank, labels, k)
 
         print("Average nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
         print("MRR@{0} for {1} queries: {2:.3f}".format(k, num_q, MRR))
