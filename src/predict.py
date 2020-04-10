@@ -23,7 +23,7 @@ def main():
               'query': args.query,
               'k': args.k}
 
-    FinBERT_QA()
+    FinBERT_QA(config)
 
 if __name__ == "__main__":
     main()

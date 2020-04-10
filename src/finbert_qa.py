@@ -866,7 +866,6 @@ class evaluate_bert_model():
         print('\nLoading BERT tokenizer...')
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
         # Initialize model
-        print("\nLoading pre-trained BERT model...")
         self.model = BERT_QA(self.bert_model_name).initialize_model().to(self.device)
 
         # Evaluate model
@@ -988,7 +987,6 @@ class FinBERT_QA():
         print('\nLoading BERT tokenizer...')
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
         # Initialize model
-        print("\nLoading pre-trained BERT model...")
         self.model = BERT_QA('bert-qa').initialize_model().to(self.device)
 
         self.user_input = self.config['user_input']
@@ -1014,11 +1012,11 @@ class FinBERT_QA():
         # Empty list for the probability scores of relevancy
         scores = []
         # For each answer in the candidates
-        for docid in tqdm(cands):
+        for docid in cands:
             # Map the docid to text
             ans_text = docid_to_text[docid]
             # Create inputs for the model
-            encoded_seq = tokenizer.encode_plus(q_text, ans_text,
+            encoded_seq = self.tokenizer.encode_plus(q_text, ans_text,
                                                 max_length=self.max_seq_len,
                                                 pad_to_max_length=True,
                                                 return_token_type_ids=True,
@@ -1058,6 +1056,7 @@ class FinBERT_QA():
         if self.user_input == True:
             # Ask the user for a keyword query.
             self.query = input("\nPlease enter your question: ")
+            print("\n")
         else:
             self.query = self.config['query']
 
@@ -1067,15 +1066,16 @@ class FinBERT_QA():
         for i in range(0, len(hits)):
             self.cands.append(int(hits[i].docid))
 
+        print("\nRanking...\n")
         # Download model
         model_name = get_trained_model("finbert-qa")
         model_path = "../fiqa/model/trained/finbert-qa/" + model_name
         # Load model
         self.model.load_state_dict(torch.load(model_path), strict=False)
 
-        self.rank, self.scores = self.prediction(self.model, self.query, self.cands)
+        self.rank, self.scores = self.predict(self.model, self.query, self.cands)
 
-        print("Question: \n\t{}\n".format(query))
+        print("Question: \n\t{}\n".format(self.query))
         print("Top-{} Answers: \n".format(self.k))
         for i in range(0, self.k):
-            print("\t{}. {}\n".format(i+1, docid_to_text[rank[i]]))
+            print("{}.\t{}\n".format(i+1, docid_to_text[self.rank[i]]))
