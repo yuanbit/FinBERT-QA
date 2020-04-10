@@ -158,7 +158,7 @@ def evaluate(qid_ranked_docs, qid_rel, k):
             cumulated_reciprocal_rank, r_pos = compute_RR(cand_docs, rel_docs, cumulated_reciprocal_rank, rank_pos, k)
 
     # Compute the average MRR@k across all queries
-    MRR = cumulated_reciprocal_rank/len(qid_rel)
+    MRR = cumulated_reciprocal_rank/len(qid_ranked_docs)
     # Compute the nDCG@k across all queries
     average_ndcg = avg_ndcg(rel_scores, k)
 

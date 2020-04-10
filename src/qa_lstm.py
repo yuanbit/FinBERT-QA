@@ -69,7 +69,7 @@ class QA_LSTM(nn.Module):
             emb_layer: Torch embedding layer
         """
         print("\nInitializing model...")
-        print("\nDownloading pre-trained GloVe embeddings...")
+        print("\nDownloading pre-trained GloVe embeddings...\n")
         # Use GloVe embeddings from torchtext
         emb = torchtext.vocab.GloVe("6B", dim=self.emb_dim)
         # Dictionary mapping of word idx to GloVe vectors

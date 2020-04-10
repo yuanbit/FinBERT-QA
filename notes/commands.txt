@@ -4,7 +4,7 @@ python3 src/generate_data.py --query_path data/raw/FiQA_train_question_final.tsv
 --------------------------------------------------------------------------
 python3 src/predict.py --user_input --k 5
 
-python3 src/predict.py --query 'What kind of stocks should I invest?" --k 10
+python3 src/predict.py --query 'What kind of stocks should I invest?' --k 10
 
 
 --------------------------------------------------------------------------
