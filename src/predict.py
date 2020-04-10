@@ -26,6 +26,6 @@ def main():
     if len(sys.argv) != 4:
         print("Please see basic usage.")
         sys.exit()
-        
+
 if __name__ == "__main__":
     main()

@@ -2,6 +2,8 @@ from tqdm import tqdm
 import numpy as np
 import random
 import torch
+import json
+import os
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from torch.nn.functional import softmax
@@ -11,6 +13,9 @@ from pyserini.search import pysearch
 from helper.utils import *
 from helper.download import *
 from helper.evaluate import *
+
+# Set Java path for PySerini
+os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
 
 # Set the random seed manually for reproducibility.
 torch.backends.cudnn.deterministic = True
