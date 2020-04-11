@@ -13,12 +13,13 @@ def main():
     help="Specify model type as 'qa-lstm' or 'bert'")
 
     # Optional arguments
-    parser.add_argument("--use_default_config", default=False, \
-                        action="store_true", help="Use default data and configuration")
+    parser.add_argument("--use_default_data", default=False, \
+                        action="store_true", help="Use default training, validation, and test data")
     parser.add_argument("--train_pickle", default=None, type=str, required=False,\
-                        help="Path to training data in .pickle format")
+                        help="Path to training data in .pickle format if use_default_data not called.")
     parser.add_argument("--valid_pickle", default=None, type=str, required=False,\
-                        help="Path to validation data in .pickle format")
+                        help="Path to validation data in .pickle format if use_default_data not called.")
+
     parser.add_argument("--device", default='gpu', type=str, required=False,
     help="Specify 'gpu' or 'cpu'")
     parser.add_argument("--max_seq_len", default=512, type=int, required=False,
@@ -53,9 +54,10 @@ def main():
     args = parser.parse_args()
 
     config = {'model_type': args.model_type,
-              'use_default_config': args.use_default_config,
+              'use_default_data': args.use_default_data,
               'train_set': args.train_pickle,
               'valid_set': args.valid_pickle,
+              'test_set': None,
               'device': args.device,
               'max_seq_len': args.max_seq_len,
               'batch_size': args.batch_size,
@@ -70,10 +72,9 @@ def main():
               'weight_decay': args.weight_decay,
               'num_warmup_steps': args.num_warmup_steps}
 
-    # TO-DO: Catch error for invalid datasets
 
     if config['model_type'] == 'qa-lstm':
-        train_qa_lstm_model(config)
+        QA_LSTM(config).run_train()
     elif config['model_type'] == 'bert':
         train_bert_model(config)
     else:

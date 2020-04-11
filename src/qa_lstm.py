@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import numpy as np
 import random
 import torch
@@ -16,27 +17,15 @@ torch.backends.cudnn.deterministic = True
 torch.manual_seed(1234)
 
 # Dictonary with token to id mapping
-vocab = load_pickle("../fiqa/data/qa_lstm_tokenizer/word2index.pickle")
+vocab = load_pickle(Path.cwd()/"data/qa_lstm_tokenizer/word2index.pickle")
 # Dictonary with qid to tokenized text mapping
-qid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
+qid_to_tokenized_text = load_pickle(Path.cwd()/'data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
 # Dictionary with docid to tokenized text mapping
-docid_to_tokenized_text = load_pickle('../fiqa/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
+docid_to_tokenized_text = load_pickle(Path.cwd()/'data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
 # Labels
-labels = load_pickle('../fiqa/data/data_pickle/labels.pickle')
+labels = load_pickle(Path.cwd()/'data/data_pickle/labels.pickle')
 
-DEFAULT_CONFIG = {'model_type': 'qa-lstm',
-                  'use_default_config': True,
-                  'device': 'gpu',
-                  'max_seq_len': 128,
-                  'batch_size': 64,
-                  'n_epochs': 3,
-                  'lr': 1e-3,
-                  'emb_dim': 100,
-                  'hidden_size': 256,
-                  'dropout': 0.2,
-                  'margin': 0.2}
-
-class QA_LSTM(nn.Module):
+class LSTM_MODEL(nn.Module):
     """
     QA-LSTM model
     """
@@ -135,38 +124,28 @@ class QA_LSTM(nn.Module):
 
         return similarity
 
-class train_qa_lstm_model():
+class QA_LSTM():
     """Train the QA-LSTM model
     """
     def __init__(self, config):
-        # Overwrite config to default
-        if config['use_default_config'] == True:
-            self.config = DEFAULT_CONFIG
+        self.config = config
+
+        if self.config['use_default_data'] == True:
+        	# Load data
+        	self.train_set = load_pickle(Path.cwd()/"data/data_pickle/train_set_50.pickle")
+        	self.valid_set = load_pickle(Path.cwd()/"data/data_pickle/valid_set_50.pickle")
+        	self.test_set = load_pickle(Path.cwd()/"data/data_pickle/test_set_50.pickle")
         else:
-            self.config = config
-            # Load training set
-            self.train_set = load_pickle(self.config['train_set'])
-            # Load validation set
-            self.valid_set = load_pickle(self.config['valid_set'])
+	        # Load data from custom path
+	        self.train_set = load_pickle(self.config['train_set'])
+	        self.valid_set = load_pickle(self.config['valid_set'])
+	        self.test_set = load_pickle(self.config['test_set'])
         # Use GPU or CPU
         self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         # Maximum sequence length
         self.max_seq_len = self.config['max_seq_len']
-        # Batch size
-        self.batch_size = self.config['batch_size']
-        # Number of epochs
-        self.n_epochs = self.config['n_epochs']
-        # Margin for hinge loss
-        self.margin = self.config['margin']
-
-        print("\nGenerating training and validation data...")
-        self.train_dataloader, self.validation_dataloader = self.get_dataloader()
         # Initialize model
-        self.model = QA_LSTM(self.config).to(self.device)
-        # Use Adam optimizer
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.config['lr'])
-
-        self.train_lstm()
+        self.model = LSTM_MODEL(self.config).to(self.device)
 
     def hinge_loss(self, pos_sim, neg_sim):
         """
@@ -177,8 +156,11 @@ class train_qa_lstm_model():
             pos_sim: Tensor with similarity of a question and a positive answer
             neg_sim: Tensor with similarity of a question and a negative answer
         """
+        # Margin for hinge loss
+        margin = self.config['margin']
+
         loss = torch.max(torch.tensor(0, dtype=torch.float).to(self.device), \
-                         self.margin - pos_sim + neg_sim)
+                         margin - pos_sim + neg_sim)
         return loss
 
     def pad_seq(self, seq_idx):
@@ -216,7 +198,7 @@ class train_qa_lstm_model():
 
         return vectorized_seq
 
-    def get_lstm_input_data(self, dataset):
+    def get_input_data(self, dataset):
         """Creates input data for model.
 
         Returns:
@@ -258,39 +240,32 @@ class train_qa_lstm_model():
 
         return q_input_ids, pos_input_ids, neg_input_ids
 
-    def get_dataloader(self):
-        """Creates train and validation DataLoaders with question, positive
-        answer, and negative answer vectorized inputs.
+    def get_dataloader(self, dataset, type):
+	    """Creates train and validation DataLoaders with question, positive
+	    answer, and negative answer vectorized inputs.
 
-        Returns:
-            train_dataloader: DataLoader object
-            validation_dataloader: DataLoader object
-        """
-        if self.config['use_default_config'] == True:
-            train_q_input, train_pos_input, train_neg_input, \
-            valid_q_input, valid_pos_input, valid_neg_input = load_input_data("qa-lstm")
-        else:
-            train_q_input, train_pos_input, train_neg_input = self.get_lstm_input_data(self.train_set)
-            valid_q_input, valid_pos_input, valid_neg_input = self.get_lstm_input_data(self.valid_set)
+	    Returns:
+	        dataloader: DataLoader object
+	    ----------
+	    Arguements:
+	        dataset: List of lists in the form of [qid, [pos ans], [ans cands]]
+	        type: str - 'train' or 'validation'
+	    """
+	    question_input, pos_ans_input, neg_ans_input = self.get_input_data(dataset)
 
-        train_q_inputs = torch.tensor(train_q_input)
-        train_pos_inputs = torch.tensor(train_pos_input)
-        train_neg_inputs = torch.tensor(train_neg_input)
-        # Create the DataLoader for our training set.
-        train_data = TensorDataset(train_q_inputs, train_pos_inputs, train_neg_inputs)
-        train_sampler = RandomSampler(train_data)
-        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
+	    question_inputs = torch.tensor(question_input)
+	    pos_ans_inputs = torch.tensor(pos_ans_input)
+	    neg_ans_inputs = torch.tensor(neg_ans_input)
 
+	    # Create the DataLoader
+	    data = TensorDataset(question_inputs, pos_ans_inputs, neg_ans_inputs)
+	    if type == "train":
+	        sampler = RandomSampler(data)
+	    else:
+	        sampler = SequentialSampler(data)
+	    dataloader = DataLoader(data, sampler=sampler, batch_size=self.batch_size)
 
-        valid_q_inputs = torch.tensor(valid_q_input)
-        valid_pos_inputs = torch.tensor(valid_pos_input)
-        valid_neg_inputs = torch.tensor(valid_neg_input)
-        # Create the DataLoader for our validation set.
-        validation_data = TensorDataset(valid_q_inputs, valid_pos_inputs, valid_neg_inputs)
-        validation_sampler = SequentialSampler(validation_data)
-        validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=self.batch_size)
-
-        return train_dataloader, validation_dataloader
+	    return dataloader
 
     def train(self, model, train_dataloader, optimizer):
         """Trains the model and returns the average loss
@@ -367,78 +342,39 @@ class train_qa_lstm_model():
 
         return avg_loss
 
-    def train_lstm(self):
+    def run_train(self):
         """Train and validate the model and print the average loss and accuracy.
         """
+        # Batch size
+        self.batch_size = self.config['batch_size']
+        # Number of epochs
+        self.n_epochs = self.config['n_epochs']
+
+        print("\nGenerating training and validation data...")
+        train_dataloader = self.get_dataloader(self.train_set, "train")
+        validation_dataloader = self.get_dataloader(self.valid_set, "validation")
+
+        # Use Adam optimizer
+        optimizer = optim.Adam(self.model.parameters(), lr=self.config['lr'])
+
         # Lowest validation lost
         best_valid_loss = float('inf')
 
         print("\nTraining model...\n")
         for epoch in range(self.n_epochs):
             # Evaluate training loss
-            train_loss = self.train(self.model, self.train_dataloader, self.optimizer)
+            train_loss = self.train(self.model, train_dataloader, optimizer)
             # Evaluate validation loss
-            valid_loss = self.validate(self.model, self.validation_dataloader)
+            valid_loss = self.validate(self.model, validation_dataloader)
             # At each epoch, if the validation loss is the best
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
                 # Save the parameters of the model
-                torch.save(self.model.state_dict(), '../fiqa/model/'+str(epoch+1)+'_qa_lstm.pt')
+                torch.save(self.model.state_dict(), Path.cwd()/'model/'+str(epoch+1)+'_qa_lstm.pt')
 
             print("\n\n Epoch {}:".format(epoch+1))
             print("\t Train Loss: {0:.3f}".format(train_loss))
             print("\t Validation Loss: {0:.3f}\n".format(valid_loss))
-
-class evaluate_qa_lstm_model():
-    """Evaluate the QA-LSTM model
-    """
-    def __init__(self, config):
-        self.config = config
-        # Load test set
-        self.test_set = load_pickle(self.config['test_set'])
-        # Use GPU or CPU
-        self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
-        # Maximum sequence length
-        self.max_seq_len = self.config['max_seq_len']
-        # Initialize model
-        self.model = QA_LSTM(self.config).to(self.device)
-        # Evaluate model
-        self.evaluate_model()
-
-    def pad_seq(self, seq_idx):
-        """Creates padded or truncated sequence.
-
-        Returns:
-            seq: list of padded vectorized sequence
-        ----------
-        Arguements:
-            seq_idx: tensor with similarity of a question and a positive answer
-        """
-        # Pad each sequence to be the same length to process in batches
-        # pad_token = 0
-        if len(seq_idx) >= self.max_seq_len:
-            seq_idx = seq_idx[:self.max_seq_len]
-        else:
-            seq_idx += [0]*(self.max_seq_len - len(seq_idx))
-        seq = seq_idx
-
-        return seq
-
-    def vectorize(self, seq):
-        """Creates vectorized sequence.
-
-        Returns:
-            vectorized_seq: List of padded vectorized sequence
-        ----------
-        Arguements:
-            seq: List of tokens in a sequence
-        """
-        # Map tokens in seq to idx
-        seq_idx = [vocab[token] for token in seq]
-        # Pad seq idx
-        vectorized_seq = self.pad_seq(seq_idx)
-
-        return vectorized_seq
 
     def get_rank(self, model):
         """Re-ranks the answer candidates per question using trained model.
@@ -450,12 +386,6 @@ class evaluate_qa_lstm_model():
         -------------------
         Arguments:
             model - Trained PyTorch model
-            test_set - List of lists
-                    Each element is a list contraining
-                    [qid, list of pos docid, list of candidate docid]
-            qid_rel: Dictionary
-                    key - qid
-                    value - List of relevant answer ids
         """
         # Dictionary - key: qid, value: ranked list of docids
         qid_pred_rank = {}
@@ -496,24 +426,18 @@ class evaluate_qa_lstm_model():
         # Number of questions
         num_q = len(self.test_set)
 
-        # If not use pre-computed rank
-        if self.config['use_rank_pickle'] == False:
-            # If use trained model
-            if self.config['use_trained_model'] == True:
-                # Download model
-                model_name = get_trained_model("qa-lstm")
-                model_path = "../fiqa/model/trained/qa-lstm/" + model_name
-            else:
-                model_path = self.config['model_path']
-            # Load model
-            self.model.load_state_dict(torch.load(model_path), strict=False)
-            print("\nEvaluating...\n")
-            # Get rank
-            qid_pred_rank = self.get_rank(self.model)
+        # If use trained model
+        if self.config['use_trained_model'] == True:
+            # Download model
+            model_name = get_trained_model("qa-lstm")
+            model_path = Path.cwd()/"model/trained/qa-lstm/" + model_name
         else:
-            print("\nEvaluating...")
-            # Get pre-computed rank
-            qid_pred_rank = load_pickle("../fiqa/data/rank/qa-lstm_rank.pickle")
+            model_path = self.config['model_path']
+        # Load model
+        self.model.load_state_dict(torch.load(model_path), strict=False)
+        print("\nEvaluating...\n")
+        # Get rank
+        qid_pred_rank = self.get_rank(self.model)
 
         # Evaluate
         MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank, labels, k)

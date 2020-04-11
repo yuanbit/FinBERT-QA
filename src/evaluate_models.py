@@ -9,12 +9,15 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Required arguments
-    parser.add_argument("--test_pickle", default=None, type=str, required=True,\
-                        help="Path to test data in .pickle format")
     parser.add_argument("--model_type", default=None, type=str, required=True,
     help="Specify model type as 'qa-lstm' or 'bert'")
 
     # Optional arguments
+    parser.add_argument("--use_default_data", default=False, \
+                        action="store_true", help="Use default training, validation, and test data")
+    parser.add_argument("--test_pickle", default=None, type=str, required=False,\
+                        help="Path to test data in .pickle format if use_default_data not called.")
+
     parser.add_argument("--use_trained_model", default=False, \
                         action="store_true", \
                         help="Use already fine-tuned model.")
@@ -41,9 +44,11 @@ def main():
 
     args = parser.parse_args()
 
-    config = {'test_set': args.test_pickle,
-              'labels': args.label_pickle,
-              'model_type': args.model_type,
+    config = {'model_type': args.model_type,
+              'use_default_data': args.use_default_data,
+              'test_set': args.test_pickle,
+              'train_set': None,
+              'valid_set':None,
               'use_trained_model': args.use_trained_model,
               'bert_model_name': args.bert_model_name,
               'bert_finetuned_model': args.bert_finetuned_model,
@@ -58,7 +63,7 @@ def main():
     # TO-DO: Catch error for invalid datasets
 
     if config['model_type'] == 'qa-lstm':
-        evaluate_qa_lstm_model(config)
+        QA_LSTM(config).evaluate_model()
     elif config['model_type'] == 'bert':
         evaluate_bert_model(config)
     else:

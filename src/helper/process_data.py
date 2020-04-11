@@ -4,7 +4,7 @@ nltk.download('punkt')
 from nltk.tokenize import wordpunct_tokenize
 from collections import Counter
 
-from utils import *
+from .utils import *
 
 def pre_process(text):
     """Returns a lower-cased string with punctuations and special characters removed.
