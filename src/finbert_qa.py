@@ -1,3 +1,4 @@
+from pathlib import Path
 from tqdm import tqdm
 import numpy as np
 import random
@@ -14,33 +15,20 @@ from helper.utils import *
 from helper.download import *
 from helper.evaluate import *
 
-# Set Java path for PySerini
-# os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
 
 # Set the random seed manually for reproducibility.
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(1234)
 
-# Lucene index
-FIQA_INDEX = "../fiqa/retriever/lucene-index-fiqa"
 # Dictionary mapping of docid and qid to raw text
-docid_to_text = load_pickle('../fiqa/data/id_to_text/docid_to_text.pickle')
-qid_to_text = load_pickle('../fiqa/data/id_to_text/qid_to_text.pickle')
+docid_to_text = load_pickle(Path.cwd()/'data/id_to_text/docid_to_text.pickle')
+qid_to_text = load_pickle(Path.cwd()/'data/id_to_text/qid_to_text.pickle')
 # Labels
-labels = load_pickle('../fiqa/data/data_pickle/labels.pickle')
+labels = load_pickle(Path.cwd()/'data/data_pickle/labels.pickle')
+# Lucene index
+fiqa_index = Path.cwd()/"retriever/lucene-index-fiqa"
 
-DEFAULT_CONFIG = {'model_type': 'bert',
-                  'use_default_config': True,
-                  'device': 'gpu',
-                  'max_seq_len': 512,
-                  'batch_size': 8,
-                  'n_epochs': 3,
-                  'lr': 3e-6,
-                  'margin': 0.5,
-                  'weight_decay': 0.01,
-                  'num_warmup_steps': 10000}
-
-class BERT_QA():
+class BERT_MODEL():
     """Fine-tuned BERT model for non-factoid question answering.
     """
     def __init__(self, bert_model_name):
@@ -48,7 +36,7 @@ class BERT_QA():
         """
         self.bert_model_name = bert_model_name
 
-    def initialize_model(self):
+    def get_model(self):
         """Initialize which pre-trained BERT model to use.
         BertForSequenceClassification is a model from Huggingface's transformer
         library that contains the pretrained BERT model with a single linear
@@ -61,15 +49,15 @@ class BERT_QA():
             model_path = "bert-base-uncased"
         elif self.bert_model_name == "finbert-domain":
             get_model("finbert-domain")
-            model_path = '../fiqa/model/finbert-domain'
+            model_path = Path.cwd()/'model/finbert-domain'
         elif self.bert_model_name == "finbert-task":
             get_model("finbert-task")
-            model_path = '../fiqa/model/finbert-task'
+            model_path = Path.cwd()/'model/finbert-task'
         else:
             get_model("bert-qa")
-            model_path = '../fiqa/model/bert-qa'
+            model_path = Path.cwd()/'model/bert-qa'
 
-        print("\nLoading pre-trained BERT model...")
+        
         model = BertForSequenceClassification.from_pretrained(model_path, \
                                                               cache_dir=None, \
                                                               num_labels=2)
@@ -78,34 +66,20 @@ class BERT_QA():
 class PointwiseBERT():
     def __init__(self, config, tokenizer, model, optimizer):
         self.config = config
-        # Overwrite config to default
-        if self.config['use_default_config'] == False:
-            self.train_set = load_pickle(self.config['train_set'])
-            # Load validation set
-            self.valid_set = load_pickle(self.config['valid_set'])
+        self.train_set = load_pickle(self.config['train_set'])
+        # Load validation set
+        self.valid_set = load_pickle(self.config['valid_set'])
         # Use GPU or CPU
         self.device = torch.device('cuda' if self.config['device'] == 'gpu' else 'cpu')
         # Maximum sequence length
-        self.max_seq_len = config['max_seq_len']
+        self.max_seq_len = self.config['max_seq_len']
         # Batch size
-        self.batch_size = config['batch_size']
-        # Number of epochs
-        self.n_epochs = config['n_epochs']
+        self.batch_size = self.config['batch_size']
         # Load the BERT tokenizer.
         self.tokenizer = tokenizer
-        # Generate training and validation data
-        print("\nGenerating training and validation data...\n")
-        self.train_dataloader, self.validation_dataloader = self.get_dataloader()
         # Initialize model
         self.model = model
         self.optimizer = optimizer
-        # Total number of training steps is number of batches * number of epochs.
-        total_steps = len(self.train_dataloader) * self.n_epochs
-        # Create a schedule with a learning rate that decreases linearly
-        # after linearly increasing during a warmup period
-        self.scheduler = get_linear_schedule_with_warmup(self.optimizer, \
-                    num_warmup_steps = config['num_warmup_steps'], \
-                    num_training_steps = total_steps)
 
     def get_input_data(self, dataset):
         """Creates input parameters for training and validation.
@@ -173,55 +147,39 @@ class PointwiseBERT():
 
         return input_ids, token_type_ids, att_masks, labels
 
-    def get_dataloader(self):
+    def get_dataloader(self, dataset, type):
         """Creates train and validation DataLoaders with input_ids,
         token_type_ids, att_masks, and labels
 
         Returns:
             train_dataloader: DataLoader object
             validation_dataloader: DataLoader object
-        """
-        # Use default data
-        if self.config['use_default_config'] == True:
-            train_input, train_type_id, train_att_mask, \
-            train_label, valid_input, valid_type_id, \
-            valid_att_mask, valid_label = load_input_data("pointwise-bert")
-        else:
-            # Create training input parameters
-            train_input, train_type_id, \
-            train_att_mask, train_label = self.get_input_data(self.train_set)
-            # Create validation input parameters
-            valid_input, valid_type_id, \
-            valid_att_mask, valid_label = self.get_input_data(self.valid_set)
 
-        # Convert all train inputs and labels into torch tensors
-        train_inputs = torch.tensor(train_input)
-        train_type_ids = torch.tensor(train_type_id)
-        train_masks = torch.tensor(train_att_mask)
-        train_labels = torch.tensor(train_label)
+        -----------------
+        Arguements:
+            dataset: List of lists in the form of [qid, [pos ans], [ans cands]]
+            type: str - 'train' or 'validation'
+            batch_size: int
+        """
+        # Create input data
+        input_id, token_type_id, \
+        att_mask, label = self.get_input_data(dataset, self.max_seq_len)
+
+        # Convert all inputs to torch tensors
+        input_ids = torch.tensor(input_id)
+        token_type_ids = torch.tensor(token_type_id)
+        att_masks = torch.tensor(att_mask)
+        labels = torch.tensor(label)
 
         # Create the DataLoader for our training set.
-        train_data = TensorDataset(train_inputs, train_type_ids, train_masks, \
-                                   train_labels)
-        train_sampler = RandomSampler(train_data)
-        train_dataloader = DataLoader(train_data, sampler=train_sampler, \
-                                      batch_size=self.batch_size)
-
-        # Convert all validation inputs and labels into torch tensors
-        validation_inputs = torch.tensor(valid_input)
-        validation_type_ids = torch.tensor(valid_type_id)
-        validation_masks = torch.tensor(valid_att_mask)
-        validation_labels = torch.tensor(valid_label)
-
-        # Create the DataLoader for our validation set.
-        validation_data = TensorDataset(validation_inputs, validation_type_ids,\
-                                        validation_masks, validation_labels)
-        validation_sampler = SequentialSampler(validation_data)
-        validation_dataloader = DataLoader(validation_data, \
-                                           sampler=validation_sampler, \
-                                           batch_size=self.batch_size)
-
-        return train_dataloader, validation_dataloader
+        data = TensorDataset(input_ids, token_type_ids, att_masks, labels)
+        if type == "train":
+            sampler = RandomSampler(data)
+        else:
+            sampler = SequentialSampler(data)
+        dataloader = DataLoader(data, sampler=sampler, batch_size=self.batch_size)
+        
+        return dataloader
 
     def get_accuracy(self, preds, labels):
         """Compute the accuracy of binary predictions.
@@ -378,6 +336,22 @@ class PointwiseBERT():
     def train_pointwise(self):
         """Train and validate the model and print the average loss and accuracy.
         """
+        # Number of epochs
+        n_epochs = self.config['n_epochs']
+
+        # Generate training and validation data
+        print("\nGenerating training and validation data...\n")
+        train_dataloader = self.get_dataloader(self.train_set, "train")
+        validation_dataloader = self.get_dataloader(self.valid_set, "validation")
+
+        # Total number of training steps is number of batches * number of epochs.
+        total_steps = len(train_dataloader) * n_epochs
+        # Create a schedule with a learning rate that decreases linearly
+        # after linearly increasing during a warmup period
+        scheduler = get_linear_schedule_with_warmup(self.optimizer, \
+                    num_warmup_steps = self.config['num_warmup_steps'], \
+                    num_training_steps = total_steps)
+
         # Lowest validation lost
         best_valid_loss = float('inf')
 
@@ -385,16 +359,16 @@ class PointwiseBERT():
         for epoch in range(self.n_epochs):
             # Evaluate training loss
             train_loss, train_acc = self.train(self.model, \
-                                               self.train_dataloader, \
+                                               train_dataloader, \
                                                self.optimizer, \
-                                               self.scheduler)
+                                               scheduler)
             # Evaluate validation loss
             valid_loss, valid_acc = self.validate(self.model, \
-                                                  self.validation_dataloader)
+                                                  validation_dataloader)
             # At each epoch, if the validation loss is the best
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
-                torch.save(self.model.state_dict(), '../fiqa/model/' + \
+                torch.save(self.model.state_dict(), Path.cwd()/'model/' + \
                 str(epoch+1)+ '_pointwise_' + self.config['bert_model_name'] + '.pt')
 
             print("\n\n Epoch {}:".format(epoch+1))
@@ -404,36 +378,20 @@ class PointwiseBERT():
 class PairwiseBERT():
     def __init__(self, config, tokenizer, model, optimizer):
         self.config = config
-        # Overwrite config to default
-        if self.config['use_default_config'] == False:
-            self.train_set = load_pickle(self.config['train_set'])
-            # Load validation set
-            self.valid_set = load_pickle(self.config['valid_set'])
+        self.train_set = load_pickle(self.config['train_set'])
+        # Load validation set
+        self.valid_set = load_pickle(self.config['valid_set'])
         # Use GPU or CPU
         self.device = torch.device('cuda' if self.config['device'] == 'gpu' else 'cpu')
         # Maximum sequence length
         self.max_seq_len = config['max_seq_len']
         # Batch size
         self.batch_size = config['batch_size']
-        # Number of epochs
-        self.n_epochs = config['n_epochs']
-        # Margin for loss function
-        self.margin = config['margin']
         # Load the BERT tokenizer.
         self.tokenizer = tokenizer
-        # Generate training and validation data
-        print("\nGenerating training and validation data...\n")
-        self.train_dataloader, self.validation_dataloader = self.get_dataloader()
         # Initialize model
         self.model = model
         self.optimizer = optimizer
-        # Total number of training steps is number of batches * number of epochs.
-        total_steps = len(self.train_dataloader) * self.n_epochs
-        # Create a schedule with a learning rate that decreases linearly
-        # after linearly increasing during a warmup period
-        self.scheduler = get_linear_schedule_with_warmup(self.optimizer, \
-                    num_warmup_steps = config['num_warmup_steps'], \
-                    num_training_steps = total_steps)
 
     def get_input_data(self, dataset):
         """Creates input parameters for training and validation.
@@ -522,7 +480,7 @@ class PairwiseBERT():
         return pos_input_ids, pos_type_ids, pos_masks, pos_labels, \
                neg_input_ids, neg_type_ids, neg_masks, neg_labels
 
-    def get_dataloader(self):
+    def get_dataloader(self, dataset, type):
         """Creates train and validation DataLoaders with input_ids,
         token_type_ids, att_masks, and labels
 
@@ -530,64 +488,31 @@ class PairwiseBERT():
             train_dataloader: DataLoader object
             validation_dataloader: DataLoader object
         """
-        # Use default data
-        if self.config['use_default_config'] == True:
-            train_pos_input, train_pos_type_id, train_pos_mask, \
-            train_pos_label, train_neg_input, train_neg_type_id, \
-            train_neg_mask, train_neg_label, valid_pos_input, \
-            valid_pos_type_id, valid_pos_mask, valid_pos_label, \
-            valid_neg_input, valid_neg_type_id, valid_neg_mask, \
-            valid_neg_label = load_input_data("pairwise-bert")
+        # Create input parameters
+        pos_input_id, pos_type_id, pos_att_mask, pos_label, \
+        neg_input_id, neg_type_id, neg_att_mask, \
+        neg_label = self.get_input_data(dataset)
+
+        # Convert all inputs and into torch tensors
+        pos_input_ids = torch.tensor(pos_input_id)
+        pos_type_ids = torch.tensor(pos_type_id)
+        pos_att_masks = torch.tensor(pos_att_mask)
+        pos_labels = torch.tensor(pos_label)
+        neg_input_ids = torch.tensor(neg_input_id)
+        neg_type_ids = torch.tensor(neg_type_id)
+        neg_att_masks = torch.tensor(neg_att_mask)
+        neg_labels = torch.tensor(neg_label)
+
+        # Create the DataLoader
+        data = TensorDataset(pos_input_ids, pos_type_ids, pos_att_masks, pos_labels, \
+                             neg_input_ids, neg_type_ids, neg_att_masks, neg_labels)
+        if type == "train":
+            sampler = RandomSampler(data)
         else:
-            # Create training input parameters
-            train_pos_input, train_pos_type_id, train_pos_mask, \
-            train_pos_label, train_neg_input, train_neg_type_id, \
-            train_neg_mask, train_neg_label = self.get_input_data(self.train_set)
-            # Create validation input parameters
-            valid_pos_input, valid_pos_type_id, valid_pos_mask, \
-            valid_pos_label, valid_neg_input, valid_neg_type_id, \
-            valid_neg_mask, valid_neg_label = self.get_input_data(self.valid_set)
+            sampler = SequentialSampler(data)
+        dataloader = DataLoader(data, sampler=sampler, batch_size=self.batch_size)
 
-        # Convert all train inputs and labels into torch tensors
-        train_pos_inputs = torch.tensor(train_pos_input)
-        train_pos_type_ids = torch.tensor(train_pos_type_id)
-        train_pos_masks = torch.tensor(train_pos_mask)
-        train_pos_labels = torch.tensor(train_pos_label)
-        train_neg_inputs = torch.tensor(train_neg_input)
-        train_neg_type_ids = torch.tensor(train_neg_type_id)
-        train_neg_masks = torch.tensor(train_neg_mask)
-        train_neg_labels = torch.tensor(train_neg_label)
-
-        # Create the DataLoader for our training set.
-        train_data = TensorDataset(train_pos_inputs, train_pos_type_ids, \
-                                   train_pos_masks, train_pos_labels, \
-                                   train_neg_inputs, train_neg_type_ids, \
-                                   train_neg_masks, train_neg_labels)
-        train_sampler = RandomSampler(train_data)
-        train_dataloader = DataLoader(train_data, sampler=train_sampler, \
-                                      batch_size=self.batch_size)
-
-        # Convert all validation inputs and labels into torch tensors
-        valid_pos_inputs = torch.tensor(valid_pos_input)
-        valid_pos_type_ids = torch.tensor(valid_pos_type_id)
-        valid_pos_masks = torch.tensor(valid_pos_mask)
-        valid_pos_labels = torch.tensor(valid_pos_label)
-        valid_neg_inputs = torch.tensor(valid_neg_input)
-        valid_neg_type_ids = torch.tensor(valid_neg_type_id)
-        valid_neg_masks = torch.tensor(valid_neg_mask)
-        valid_neg_labels = torch.tensor(valid_neg_label)
-
-        # Create the DataLoader for our validation set.
-        validation_data = TensorDataset(valid_pos_inputs, valid_pos_type_ids, \
-                                        valid_pos_masks, valid_pos_labels, \
-                                        valid_neg_inputs, valid_neg_type_ids, \
-                                        valid_neg_masks, valid_neg_labels)
-        validation_sampler = SequentialSampler(validation_data)
-        validation_dataloader = DataLoader(validation_data, \
-                                           sampler=validation_sampler, \
-                                           batch_size=self.batch_size)
-
-        return train_dataloader, validation_dataloader
+        return dataloader
 
     def get_accuracy(self, preds, labels):
         """Compute the accuracy of binary predictions.
@@ -617,10 +542,12 @@ class PairwiseBERT():
             pos_scores: Torch tensor of positive QA pair probabilies
             neg_scores: Torch tensor of negative QA pair probabilies
         """
+        margin = self.config['margin']
+
         cross_entropy_loss = -torch.log(pos_scores) - torch.log(1 - neg_scores)
 
         hinge_loss = torch.max(torch.tensor(0, dtype=torch.float).to(self.device), \
-                               self.margin - pos_scores + neg_scores)
+                               margin - pos_scores + neg_scores)
 
         loss = (0.5 * cross_entropy_loss + 0.5 * hinge_loss)
 
@@ -795,6 +722,22 @@ class PairwiseBERT():
     def train_pairwise(self):
         """Train and validate the model and print the average loss and accuracy.
         """
+        # Generate training and validation data
+        print("\nGenerating training and validation data...\n")
+        self.train_dataloader = self.get_dataloader(self.train_set, "train")
+        self.validation_dataloader = self.get_dataloader(self.valid_set, "validation")
+
+        # Number of epochs
+        self.n_epochs = config['n_epochs']
+
+        # Total number of training steps is number of batches * number of epochs.
+        total_steps = len(self.train_dataloader) * self.n_epochs
+        # Create a schedule with a learning rate that decreases linearly
+        # after linearly increasing during a warmup period
+        self.scheduler = get_linear_schedule_with_warmup(self.optimizer, \
+                    num_warmup_steps = config['num_warmup_steps'], \
+                    num_training_steps = total_steps)
+
         # Lowest validation lost
         best_valid_loss = float('inf')
 
@@ -811,187 +754,43 @@ class PairwiseBERT():
             # At each epoch, if the validation loss is the best
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
-                torch.save(self.model.state_dict(), '../fiqa/model/' + \
+                torch.save(self.model.state_dict(), Path.cwd()/'model/' + \
                 str(epoch+1)+ '_pairwise_' + self.config['bert_model_name'] + '.pt')
 
             print("\n\n Epoch {}:".format(epoch+1))
             print("\t Train Loss: {} | Train Accuracy: {}%".format(round(train_loss, 3), round(train_acc*100, 2)))
             print("\t Validation Loss: {} | Validation Accuracy: {}%\n".format(round(valid_loss, 3), round(valid_acc*100, 2)))
 
-class train_bert_model():
+class FinBERT_QA():
     """
-    Train the fine-tuned BERT model.
+    Fine-tuned BERT model for FiQA.
     """
     def __init__(self, config):
+        self.config = config
         # Pre-trained BERT model name
-        bert_model_name = config['bert_model_name']
-        learning_approach = config['learning_approach']
-        # Overwrite config to default
-        if config['use_default_config'] == True:
-            config = DEFAULT_CONFIG
-        else:
-            config = config
-        # Use GPU or CPU
-        device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        self.bert_model_name = self.config['bert_model_name']
+        self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         # Load the BERT tokenizer.
         print('\nLoading BERT tokenizer...')
-        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
         # Initialize model
-        model = BERT_QA(bert_model_name).initialize_model().to(device)
-        optimizer = AdamW(model.parameters(), lr = config['lr'], \
-                          weight_decay=config['weight_decay'])
+        print("\nLoading pre-trained BERT model...")
+        self.model = BERT_MODEL(self.bert_model_name).get_model().to(self.device)
+
+    def run_train(self):
+        """Train and validate the model.
+        """
+        optimizer = AdamW(model.parameters(), lr = self.config['lr'], \
+                          weight_decay=self.config['weight_decay'])
+        learning_approach = self.config['learning_approach']
 
         # Train and validate model based on learning approach
         if learning_approach == 'pointwise':
-            trainer = PointwiseBERT(config, tokenizer, model, optimizer)
+            trainer = PointwiseBERT(self.config, self.tokenizer, self.model, optimizer)
             trainer.train_pointwise()
         else:
-            trainer = PairwiseBERT(config, tokenizer, model, optimizer)
+            trainer = PairwiseBERT(self.config, self.tokenizer, self.model, optimizer)
             trainer.train_pairwise()
-
-class evaluate_bert_model():
-    def __init__(self, config):
-        self.config = config
-        # Pre-trained BERT model name
-        self.bert_model_name = config['bert_model_name']
-        # Load test set
-        self.test_set = load_pickle(self.config['test_set'])
-        # Use GPU or CPU
-        self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
-        # Maximum sequence length
-        self.max_seq_len = self.config['max_seq_len']
-        # Fine-tuned BERT model name
-        self.bert_finetuned_model = self.config['bert_finetuned_model']
-
-        print('\nLoading BERT tokenizer...')
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-        # Initialize model
-        self.model = BERT_QA(self.bert_model_name).initialize_model().to(self.device)
-
-        # Evaluate model
-        self.evaluate_model()
-
-    def get_rank(self, model):
-        """Re-ranks the candidates answers for each question.
-
-        Returns:
-            qid_pred_rank: Dictionary
-                key - qid
-                value - list of re-ranked candidates
-        -------------------
-        Arguments:
-            model - PyTorch model
-        """
-        # Initiate empty dictionary
-        qid_pred_rank = {}
-        # Set model to evaluation mode
-        model.eval()
-        # For each element in the test set
-        for i, seq in enumerate(tqdm(self.test_set)):
-            # question id, list of rel answers, list of candidates
-            qid, label, cands = seq[0], seq[1], seq[2]
-            # Map question id to text
-            q_text = qid_to_text[qid]
-            # Convert list to numpy array
-            cands_id = np.array(cands)
-            # Empty list for the probability scores of relevancy
-            scores = []
-
-            # For each answer in the candidates
-            for docid in cands:
-                # Map the docid to text
-                ans_text = docid_to_text[docid]
-                # Create inputs for the model
-                encoded_seq = self.tokenizer.encode_plus(q_text, ans_text,
-                                                max_length=self.max_seq_len,
-                                                pad_to_max_length=True,
-                                                return_token_type_ids=True,
-                                                return_attention_mask = True)
-
-                # Numericalized, padded, clipped seq with special tokens
-                input_ids = torch.tensor([encoded_seq['input_ids']]).to(self.device)
-                # Specify question seq and answer seq
-                token_type_ids = torch.tensor([encoded_seq['token_type_ids']]).to(self.device)
-                # Sepecify which position is part of the seq which is padded
-                att_mask = torch.tensor([encoded_seq['attention_mask']]).to(self.device)
-
-                # Don't calculate gradients
-                with torch.no_grad():
-                # Forward pass, calculate logit predictions for each QA pair
-                    outputs = model(input_ids,
-                                    token_type_ids=token_type_ids,
-                                    attention_mask=att_mask)
-
-                # Get the predictions
-                logits = outputs[0]
-                # Apply activation function
-                pred = softmax(logits, dim=1)
-                # Move logits and labels to CPU
-                pred = pred.detach().cpu().numpy()
-                # Append relevant scores to list (where label = 1)
-                scores.append(pred[:,1][0])
-            # Get the indices of the sorted similarity scores
-            sorted_index = np.argsort(scores)[::-1]
-            # Get the list of docid from the sorted indices
-            ranked_ans = cands_id[sorted_index]
-            # Dict - key: qid, value: ranked list of docids
-            qid_pred_rank[qid] = ranked_ans
-
-        return qid_pred_rank
-
-    def evaluate_model(self):
-        """Prints the nDCG@10, MRR@10, Precision@1
-        """
-        k = 10
-        # Number of questions
-        num_q = len(self.test_set)
-
-        # If not use pre-computed rank
-        if self.config['use_rank_pickle'] == False:
-            # If use trained model
-            if self.config['use_trained_model'] == True:
-                # Download model
-                model_name = get_trained_model(self.bert_finetuned_model)
-                model_path = "../fiqa/model/trained/" + \
-                             self.bert_finetuned_model + "/" + model_name
-            else:
-                model_path = self.config['model_path']
-            # Load model
-            self.model.load_state_dict(torch.load(model_path), strict=False)
-            print("\nEvaluating...\n")
-            # Get rank
-            qid_pred_rank = self.get_rank(self.model)
-        else:
-            print("\nEvaluating...\n")
-            # Get pre-computed rank
-            rank_path = "../fiqa/data/rank/" + self.bert_finetuned_model + "_rank.pickle"
-            qid_pred_rank = load_pickle(rank_path)
-
-        # Evaluate
-        MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank, labels, k)
-
-        print("Average nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
-        print("MRR@{0} for {1} queries: {2:.3f}".format(k, num_q, MRR))
-        print("Average Precision@1 for {0} queries: {1:.3f}".format(num_q, precision))
-
-class FinBERT_QA():
-    """Financial answer retriever based on fine-tuned BERT model.
-    """
-    def __init__(self, config):
-        self.config = config
-        self.searcher = pysearch.SimpleSearcher(FIQA_INDEX)
-        self.max_seq_len = 512
-        # Use GPU or CPU
-        self.device = torch.device('cuda')
-        print('\nLoading BERT tokenizer...')
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-        # Initialize model
-        self.model = BERT_QA('bert-qa').initialize_model().to(self.device)
-
-        self.user_input = self.config['user_input']
-        self.k = self.config['k']
-
-        self.search()
 
     def predict(self, model, q_text, cands):
         """Re-ranks the candidates answers for each question.
@@ -1005,7 +804,6 @@ class FinBERT_QA():
             q_text - str - query
             cands -List of retrieved candidate docids
         """
-        self.model.eval()
         # Convert list to numpy array
         cands_id = np.array(cands)
         # Empty list for the probability scores of relevancy
@@ -1047,34 +845,106 @@ class FinBERT_QA():
 
         return ranked_ans, sorted_scores
 
+    def get_rank(self, model):
+        """Re-ranks the candidates answers for each question.
+
+        Returns:
+            qid_pred_rank: Dictionary
+                key - qid
+                value - list of re-ranked candidates
+        -------------------
+        Arguments:
+            model - PyTorch model
+        """
+        # Initiate empty dictionary
+        qid_pred_rank = {}
+        # Set model to evaluation mode
+        model.eval()
+        # For each element in the test set
+        for i, seq in enumerate(tqdm(self.test_set)):
+            # question id, list of rel answers, list of candidates
+            qid, label, cands = seq[0], seq[1], seq[2]
+            # Map question id to text
+            q_text = qid_to_text[qid]
+
+            # List of re-ranked docids and the corresponding probabilities
+            ranked_ans, sorted_scores = self.predict(model, q_text, cands)
+
+            # Dict - key: qid, value: ranked list of docids
+            qid_pred_rank[qid] = ranked_ans
+
+        return qid_pred_rank
+
+    def evaluate_model(self):
+        """Prints the nDCG@10, MRR@10, Precision@1
+        """
+        # Load test set
+        self.test_set = load_pickle(self.config['test_set'])
+        # Fine-tuned BERT model name
+        bert_finetuned_model = self.config['bert_finetuned_model']
+
+        k = 10
+        # Number of questions
+        num_q = len(self.test_set)
+
+        # If use trained model
+        if self.config['use_trained_model'] == True:
+            # Download model
+            model_name = get_trained_model(bert_finetuned_model)
+            model_path = Path.cwd()/"model/trained/" + \
+                         bert_finetuned_model + "/" + model_name
+        else:
+            model_path = self.config['model_path']
+        # Load model
+        self.model.load_state_dict(torch.load(model_path), strict=False)
+        print("\nEvaluating...\n")
+        # Get rank
+        qid_pred_rank = self.get_rank(self.model)
+
+        # Evaluate
+        MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank, labels, k)
+
+        print("Average nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
+        print("MRR@{0} for {1} queries: {2:.3f}".format(k, num_q, MRR))
+        print("Average Precision@1 for {0} queries: {1:.3f}".format(num_q, precision))
+
     def search(self):
-        """Search engine based on FinBERT_QA.
-        Retrieves and re-ranks the answer candidates given a query.
+        """Search engine. Retrieves and re-ranks the answer candidates given a query.
         Renders the top-k answers for a query.
         """
-        if self.user_input == True:
+        searcher = pysearch.SimpleSearcher(fiqa_index)
+        self.k = self.config['k']
+
+        if self.config['user_input'] == True:
             # Ask the user for a keyword query.
             self.query = input("\nPlease enter your question: ")
             print("\n")
         else:
             self.query = self.config['query']
 
-        hits = self.searcher.search(self.query, k=50)
-        self.cands = []
+        hits = searcher.search(self.query, k=50)
+
+        cands = []
         
         for i in range(0, len(hits)):
-            self.cands.append(int(hits[i].docid))
+            cands.append(int(hits[i].docid))
 
         print("\nRanking...\n")
         # Download model
         model_name = get_trained_model("finbert-qa")
-        model_path = "../fiqa/model/trained/finbert-qa/" + model_name
+        model_path = Path.cwd()/"model/trained/finbert-qa/" + model_name
         # Load model
         self.model.load_state_dict(torch.load(model_path), strict=False)
+        self.model.eval()
 
-        self.rank, self.scores = self.predict(self.model, self.query, self.cands)
+        self.rank, self.scores = self.predict(self.model, query, cands)
 
-        print("Question: \n\t{}\n".format(self.query))
+        print("Question: \n\t{}\n".format(query))
         print("Top-{} Answers: \n".format(self.k))
         for i in range(0, self.k):
             print("{}.\t{}\n".format(i+1, docid_to_text[self.rank[i]]))
+
+
+    
+
+    

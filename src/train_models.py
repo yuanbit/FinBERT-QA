@@ -1,3 +1,4 @@
+from pathlib import Path
 import argparse
 import sys
 
@@ -13,11 +14,9 @@ def main():
     help="Specify model type as 'qa-lstm' or 'bert'")
 
     # Optional arguments
-    parser.add_argument("--use_default_data", default=False, \
-                        action="store_true", help="Use default training, validation, and test data")
-    parser.add_argument("--train_pickle", default=None, type=str, required=False,\
-                        help="Path to training data in .pickle format if use_default_data not called.")
-    parser.add_argument("--valid_pickle", default=None, type=str, required=False,\
+    parser.add_argument("--train_pickle", default=Path.cwd()/'data/data_pickle/train_set_50.pickle', 
+                        type=str, required=False, help="Path to training data in .pickle format if use_default_data not called.")
+    parser.add_argument("--valid_pickle", default=Path.cwd()/'data/data_pickle/valid_set_50.pickle', type=str, required=False,\
                         help="Path to validation data in .pickle format if use_default_data not called.")
 
     parser.add_argument("--device", default='gpu', type=str, required=False,
@@ -54,7 +53,6 @@ def main():
     args = parser.parse_args()
 
     config = {'model_type': args.model_type,
-              'use_default_data': args.use_default_data,
               'train_set': args.train_pickle,
               'valid_set': args.valid_pickle,
               'test_set': None,
@@ -76,7 +74,7 @@ def main():
     if config['model_type'] == 'qa-lstm':
         QA_LSTM(config).run_train()
     elif config['model_type'] == 'bert':
-        train_bert_model(config)
+        FinBERT_QA(config).run_train()
     else:
         print("Please specify 'qa-lstm' or 'bert' for model_type")
         sys.exit()

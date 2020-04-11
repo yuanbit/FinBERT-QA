@@ -21,9 +21,11 @@ def main():
 
     config = {'user_input': args.user_input,
               'query': args.query,
-              'k': args.k}
+              'k': args.k,
+              'bert_model_name': 'bert-qa',
+              'device': 'gpu'}
 
-    FinBERT_QA(config)
+    FinBERT_QA(config).search()
 
 if __name__ == "__main__":
     main()

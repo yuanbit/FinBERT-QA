@@ -30,6 +30,11 @@ class LSTM_MODEL(nn.Module):
     QA-LSTM model
     """
     def __init__(self, config):
+    	"""Initialize model parameters.
+
+    	Arguments:
+    		config: Dictionary
+    	"""
         super(QA_LSTM, self).__init__()
         # Embedding dimension
         self.emb_dim = config['emb_dim']
@@ -125,21 +130,19 @@ class LSTM_MODEL(nn.Module):
         return similarity
 
 class QA_LSTM():
-    """Train the QA-LSTM model
+    """QA-LSTM model
     """
     def __init__(self, config):
-        self.config = config
+    	"""Initialize parameters.
 
-        if self.config['use_default_data'] == True:
-        	# Load data
-        	self.train_set = load_pickle(Path.cwd()/"data/data_pickle/train_set_50.pickle")
-        	self.valid_set = load_pickle(Path.cwd()/"data/data_pickle/valid_set_50.pickle")
-        	self.test_set = load_pickle(Path.cwd()/"data/data_pickle/test_set_50.pickle")
-        else:
-	        # Load data from custom path
-	        self.train_set = load_pickle(self.config['train_set'])
-	        self.valid_set = load_pickle(self.config['valid_set'])
-	        self.test_set = load_pickle(self.config['test_set'])
+    	Arguments:
+    		config: Dictionary
+    	"""
+        self.config = config
+        # Load data from custom path
+        self.train_set = load_pickle(self.config['train_set'])
+        self.valid_set = load_pickle(self.config['valid_set'])
+        self.test_set = load_pickle(self.config['test_set'])
         # Use GPU or CPU
         self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
         # Maximum sequence length

@@ -9,6 +9,7 @@ import json
 import os
 import sys
 import argparse
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from pyserini.search import pysearch
 
@@ -18,7 +19,7 @@ from helper.utils import *
 # os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
 
 # Lucene indexer
-FIQA_INDEX = "../fiqa/retriever/lucene-index-fiqa"
+FIQA_INDEX = Path.cwd()/"retriever/lucene-index-fiqa"
 
 def split_label(qid_docid):
     """
@@ -228,7 +229,7 @@ def main():
     # Optional parameters
     parser.add_argument("--cands_size", default=50, type=int, required=False,
     help="Number of candidates to retrieve per question.")
-    parser.add_argument("--output_dir", default='../fiqa/data/data_pickle/',
+    parser.add_argument("--output_dir", default=Path.cwd()/'data/data_pickle/',
     type=str, required=False, help="The output directory where the generated data will be stored.")
 
     args = parser.parse_args()
