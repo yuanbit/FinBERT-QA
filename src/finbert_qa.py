@@ -732,14 +732,14 @@ class PairwiseBERT():
         self.validation_dataloader = self.get_dataloader(self.valid_set, "validation")
 
         # Number of epochs
-        self.n_epochs = config['n_epochs']
+        n_epochs = self.config['n_epochs']
 
         # Total number of training steps is number of batches * number of epochs.
-        total_steps = len(self.train_dataloader) * self.n_epochs
+        total_steps = len(self.train_dataloader) * n_epochs
         # Create a schedule with a learning rate that decreases linearly
         # after linearly increasing during a warmup period
         self.scheduler = get_linear_schedule_with_warmup(self.optimizer, \
-                    num_warmup_steps = config['num_warmup_steps'], \
+                    num_warmup_steps = self.config['num_warmup_steps'], \
                     num_training_steps = total_steps)
 
         # Lowest validation lost
@@ -901,7 +901,7 @@ class FinBERT_QA():
         else:
             model_path = self.config['model_path']
         # Load model
-        self.model.load_state_dict(torch.load(model_path), strict=False)
+        self.model.load_state_dict(torch.load(model_path))
         print("\nEvaluating...\n")
         # Get rank
         qid_pred_rank = self.get_rank(self.model)
@@ -909,7 +909,7 @@ class FinBERT_QA():
         # Evaluate
         MRR, average_ndcg, precision, rank_pos = evaluate(qid_pred_rank, labels, k)
 
-        print("Average nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
+        print("\nAverage nDCG@{0} for {1} queries: {2:.3f}".format(k, num_q, average_ndcg))
         print("MRR@{0} for {1} queries: {2:.3f}".format(k, num_q, MRR))
         print("Average Precision@1 for {0} queries: {1:.3f}".format(num_q, precision))
 
