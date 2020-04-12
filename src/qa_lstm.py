@@ -9,8 +9,8 @@ from torch.utils.data import TensorDataset, DataLoader, RandomSampler, Sequentia
 import torchtext
 from tqdm import tqdm
 
-from helper.utils import *
-from helper.evaluate import *
+from utils import *
+from evaluate import *
 
 # Set the random seed manually for reproducibility.
 torch.backends.cudnn.deterministic = True

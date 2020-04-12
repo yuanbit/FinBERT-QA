@@ -11,9 +11,8 @@ from torch.nn.functional import softmax
 from transformers import BertTokenizer, BertForSequenceClassification, AdamW, get_linear_schedule_with_warmup, BertConfig
 from pyserini.search import pysearch
 
-from helper.utils import *
-from helper.download import *
-from helper.evaluate import *
+from utils import *
+from evaluate import *
 
 
 # Set the random seed manually for reproducibility.

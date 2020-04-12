@@ -13,10 +13,7 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 from pyserini.search import pysearch
 
-from helper.utils import *
-
-# Set Java path for PySerini
-# os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
+from utils import *
 
 # Lucene indexer
 FIQA_INDEX = Path.cwd()/"retriever/lucene-index-fiqa"

@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from helper.utils import *
+from utils import *
 from finbert_qa import *
 
 def main():

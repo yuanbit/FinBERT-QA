@@ -2,7 +2,7 @@ from pathlib import Path
 import argparse
 import sys
 
-from helper.utils import *
+from utils import *
 from qa_lstm import *
 from finbert_qa import *
 
