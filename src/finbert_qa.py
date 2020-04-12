@@ -14,7 +14,6 @@ from pyserini.search import pysearch
 from utils import *
 from evaluate import *
 
-
 # Set the random seed manually for reproducibility.
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(1234)
