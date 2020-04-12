@@ -32,11 +32,11 @@ class LSTM_MODEL(nn.Module):
     QA-LSTM model
     """
     def __init__(self, config):
-    	"""Initialize model parameters.
+        """Initialize model parameters.
 
-    	Arguments:
-    		config: Dictionary
-    	"""
+        Arguments:
+            config: Dictionary
+        """
         super(QA_LSTM, self).__init__()
         # Embedding dimension
         self.emb_dim = config['emb_dim']
@@ -135,11 +135,11 @@ class QA_LSTM():
     """QA-LSTM model
     """
     def __init__(self, config):
-    	"""Initialize parameters.
+        """Initialize parameters.
 
-    	Arguments:
-    		config: Dictionary
-    	"""
+        Arguments:
+            config: Dictionary
+        """
         self.config = config
         # Load data from custom path
         self.train_set = load_pickle(self.config['train_set'])
@@ -246,31 +246,31 @@ class QA_LSTM():
         return q_input_ids, pos_input_ids, neg_input_ids
 
     def get_dataloader(self, dataset, type):
-	    """Creates train and validation DataLoaders with question, positive
-	    answer, and negative answer vectorized inputs.
+        """Creates train and validation DataLoaders with question, positive
+        answer, and negative answer vectorized inputs.
 
-	    Returns:
-	        dataloader: DataLoader object
-	    ----------
-	    Arguements:
-	        dataset: List of lists in the form of [qid, [pos ans], [ans cands]]
-	        type: str - 'train' or 'validation'
-	    """
-	    question_input, pos_ans_input, neg_ans_input = self.get_input_data(dataset)
+        Returns:
+            dataloader: DataLoader object
+        ----------
+        Arguements:
+            dataset: List of lists in the form of [qid, [pos ans], [ans cands]]
+            type: str - 'train' or 'validation'
+        """
+        question_input, pos_ans_input, neg_ans_input = self.get_input_data(dataset)
 
-	    question_inputs = torch.tensor(question_input)
-	    pos_ans_inputs = torch.tensor(pos_ans_input)
-	    neg_ans_inputs = torch.tensor(neg_ans_input)
+        question_inputs = torch.tensor(question_input)
+        pos_ans_inputs = torch.tensor(pos_ans_input)
+        neg_ans_inputs = torch.tensor(neg_ans_input)
 
-	    # Create the DataLoader
-	    data = TensorDataset(question_inputs, pos_ans_inputs, neg_ans_inputs)
-	    if type == "train":
-	        sampler = RandomSampler(data)
-	    else:
-	        sampler = SequentialSampler(data)
-	    dataloader = DataLoader(data, sampler=sampler, batch_size=self.batch_size)
+        # Create the DataLoader
+        data = TensorDataset(question_inputs, pos_ans_inputs, neg_ans_inputs)
+        if type == "train":
+            sampler = RandomSampler(data)
+        else:
+            sampler = SequentialSampler(data)
+        dataloader = DataLoader(data, sampler=sampler, batch_size=self.batch_size)
 
-	    return dataloader
+        return dataloader
 
     def train(self, model, train_dataloader, optimizer):
         """Trains the model and returns the average loss

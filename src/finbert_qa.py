@@ -938,23 +938,22 @@ class FinBERT_QA():
             cands.append(int(hits[i].docid))
 
         if len(cands) == 0:
-        	print("No answers found.")
-        	sys.exit()
+            print("\nNo answers found.")
+            sys.exit()
         else:
-	        print("\nRanking...\n")
-	        self.rank, self.scores = self.predict(self.model, self.query, cands)
+            print("\nRanking...\n")
+            self.rank, self.scores = self.predict(self.model, self.query, cands)
 
-	        print("Question: \n\t{}\n".format(self.query))
+            print("Question: \n\t{}\n".format(self.query))
 
-	        print("Top-{} Answers: \n".format(self.k))
+            if len(cands) < self.k:
+                self.k = len(cands)
+            else:
+                pass
 
-	        if len(cands) < self.k:
-	        	self.k = len(cands)
-	        else:
-	        	pass
-	        
-	        for i in range(0, self.k):
-	            print("{}.\t{}\n".format(i+1, docid_to_text[self.rank[i]]))
+            print("Top-{} Answers: \n".format(self.k))
+            for i in range(0, self.k):
+                print("{}.\t{}\n".format(i+1, docid_to_text[self.rank[i]]))
 
 
     
