@@ -1,17 +1,20 @@
 work in progress....
 
-[Train](#train)
-
-[Evaluate](#evaluate)
+* [Train](#train)
+* [Evaluate](#evaluate)
+* [Predict](#predict)
 
 ## Train
 ```
-python3 src/train_models.py  [--model_type MODEL_TYPE] [--use_default_config] \
-[--train_pickle TRAIN_PICKLE] [--valid_pickle VALID_PICKLE] [--device DEVICE] \
-[--max_seq_len MAX_SEQ_LEN] [--batch_size BATCH_SIZE] [--n_epochs N_EPOCHS] \
-[--lr LR] [--emb_dim EMB_DIM] [--hidden_size HIDDEN_SIZE] [--dropout DROPOUT] \
-[--bert_model_name BERT_MODEL_NAME] [--learning approach LEARNING_APPROACH] \
-[--margin MARGIN] [--weight_decay WEIGHT_DECAY] [--num_warmup_steps NUM_WARMUP_STEPS]
+python3 src/train_models.py  [--model_type MODEL_TYPE] [--train_pickle TRAIN_PICKLE] \
+                             [--valid_pickle VALID_PICKLE] [--device DEVICE] \
+                             [--max_seq_len MAX_SEQ_LEN] [--batch_size BATCH_SIZE] \
+                             [--n_epochs N_EPOCHS] [--lr LR] [--emb_dim EMB_DIM] \
+                             [--hidden_size HIDDEN_SIZE] [--dropout DROPOUT] \
+                             [--bert_model_name BERT_MODEL_NAME] \
+                             [--learning approach LEARNING_APPROACH] \
+                             [--margin MARGIN] [--weight_decay WEIGHT_DECAY] \
+                             [--num_warmup_steps NUM_WARMUP_STEPS]
 
 Arguments:
   MODEL_TYPE - Specify model type as 'qa-lstm' or 'bert'
@@ -27,86 +30,85 @@ Arguments:
   DROPOUT - Dropout rate. Specify only if model_type is 'qa-lstm'
   BERT_MODEL_NAME - Specify the pre-trained BERT model to use from 'bert-base', 'finbert-domain', 'finbert-task', 'bert-qa'
   LEARNING_APPROACH - Learning approach. Specify 'pointwise' or 'pairwise' only if model_type is 'bert'
+  MARGIN - margin for pariwise loss
   WEIGHT_DECAY - Weight decay. Specify only if model_type is 'bert'
   NUM_WARMUP_STEPS - Number of warmup steps. Specify only if model type is 'bert'
 ```
-
-### Example - Train fine-tuned BERT models with default data and configurations
+#### Example - Train and fine-tune FinBERT-QA with pointwise learning approach
 ```
-python3 src/train_models.py --model_type 'bert' \
---use_default_config \
---bert_model_name 'bert-qa' \
---learning_approach 'pointwise'
-```
-```
-DEFAULT_CONFIG = {'model_type': 'bert',
-                  'use_default_config': True,
-                  'device': 'gpu',
-                  'max_seq_len': 512,
-                  'batch_size': 8,
-                  'n_epochs': 3,
-                  'lr': 3e-6,
-                  'weight_decay': 0.01,
-                  'num_warmup_steps': 10000}
-```
-### Example - Train custom fine-tuned BERT models
-```
-python3 src/train_models.py --model_type 'bert' \
---train_pickle data/sample/train_sample.pickle \
---valid_pickle data/sample/valid_sample.pickle \
---bert_model_name 'finbert-domain' \
---learning_approach 'pointwise' \
---max_seq_len 64 \
---batch_size 128 \
---n_epochs 1 \
---lr 2e-5
+python3 src/train_models.py --model_type 'bert' 
+                            --train_pickle data/data_pickle/train_set_50.pickle \
+                            --valid_pickle data/data_pickle/valid_set_50.pickle \
+                            --bert_model_name 'bert-qa' \
+                            --learning_approach 'pointwise' \
+                            --max_seq_len 512 \
+                            --batch_size 16 \
+                            --n_epochs 3 \
+                            --lr 3e-6
 ```
 
-### Example - Train QA-LSTM with default data and configurations
+#### Example - Train and fine-tune BERT further pre-trained on the FiQA task dataset with pairwise learning approach
 ```
-python3 src/train_models.py --model_type 'qa-lstm' --use_default_config
-```
-```
-DEFAULT_CONFIG = {'model_type': 'qa-lstm',
-                  'use_default_config': True,
-                  'device': 'gpu',
-                  'max_seq_len': 128,
-                  'batch_size': 64,
-                  'n_epochs': 3,
-                  'lr': 1e-3,
-                  'emb_dim': 100,
-                  'hidden_size': 256,
-                  'dropout': 0.2,
-                  'margin:' 0.2}
+python3 src/train_models.py --model_type 'bert' 
+                            --train_pickle data/data_pickle/train_set_50.pickle \
+                            --valid_pickle data/data_pickle/valid_set_50.pickle \
+                            --bert_model_name 'finbert-task' \
+                            --learning_approach 'pairwise' \
+                            --max_seq_len 128 \
+                            --batch_size 32 \
+                            --n_epochs 3 \
+                            --lr 3e-6
 ```
 
-
-### Example - Train custom QA-LSTM
+#### Example - Train QA-LSTM
 ```
 python3 src/train_models.py --model_type 'qa-lstm' \
---train_pickle data/sample/train_sample.pickle \
---valid_pickle data/sample/valid_sample.pickle \
---max_seq_len 256 \
---batch_size 128 \
---n_epochs 1 \
---lr 0.001
+                            --train_pickle data/data_pickle/train_set_50.pickle \
+                            --valid_pickle data/data_pickle/valid_set_50.pickle \
+                            --max_seq_len 128 \
+                            --batch_size 64 \
+                            --n_epochs 3 \
+                            --lr 1e-3
 ```
 ## Evaluate
-### Example - Evaluate with fine-tuned model (FinBERT-QA)
 ```
-python3 src/evaluate_models.py --test_pickle data/processed_data/test_set_50.pickle \
---label_pickle data/labels/qid_rel_test.pickle \
---model_type 'bert' \
---max_seq_len 512 \
---use_trained_model \
---bert_finetuned_model 'finbert-qa' 
-```
-### Example - Evaluate with pre-computed ranking
-```
-python3 src/evaluate_models.py --test_pickle data/processed_data/test_set_50.pickle 
---label_pickle data/labels/qid_rel_test.pickle 
---model_type 'bert' 
---bert_finetuned_model 'finbert-qa' 
---use_rank_pickle
-```
+python3 src/evaluate_models.py  [--model_type MODEL_TYPE] [--test_pickle TEST_PICKLE] \
+                                [--bert_model_name BERT_MODEL_NAME] \
+                                [--bert_finetuned_model BERT_FINETUNED_MODEL] \
+                                [--model_path MODEL_PATH] [--device DEVICE] \
+                                [--max_seq_len MAX_SEQ_LEN] [--emb_dim EMB_DIM] \
+                                [--hidden_size HIDDEN_SIZE] [--dropout DROPOUT]
+                          
 
+Arguments:
+  MODEL_TYPE - Specify model type as 'qa-lstm' or 'bert'
+  TEST_PICKLE - Path to training data in .pickle format
+  BERT_MODEL_NAME - Specify the pre-trained BERT model to use from 'bert-base', 'finbert-domain', 'finbert-task', 'bert-qa'
+  BERT_FINETUNED_MODEL - Specify the name of the fine-tuned model from bert-pointwise', 'bert-pairwise', 'finbert-domain', 'finbert-task', 'finbert-qa'
+  MODEL_PATH - Specify model path if use_trained_model is not used
+  DEVICE - Specify 'gpu' or 'cpu'
+  MAX_SEQ_LEN - Maximum sequence length for a given input
+  EMB_DIM - Embedding dimension. Specify only if model_type is 'qa-lstm'
+  HIDDEN_SIZE - Hidden size. Specify only if model_type is 'qa-lstm'
+  DROPOUT - Dropout rate. Specify only if model_type is 'qa-lstm'
+```
+#### Example - Evaluate FinBERT-QA - fine-tuned on [Nogueira and Cho's](https://arxiv.org/pdf/1901.04085.pdf) MS MACRO model
+```
+python3 src/evaluate_models.py --test_pickle data/data_pickle/test_set_50.pickle \
+                                --model_type 'bert' \
+                                --max_seq_len 512 \
+                                --bert_finetuned_model 'finbert-qa' \
+                                --use_trained_model 
+```
+## Predict
+```
+python3 src/predict.py  [--user_input] [--query QUERY] [--k K]
+
+Arguments:
+  QUERY - Specify query if user_input is not used
+  K - Top-k answers to output
+```
+#### Example - Predict with FinBERT-QA search
+```
+python3 src/predict.py --user_input --k 5
+```
