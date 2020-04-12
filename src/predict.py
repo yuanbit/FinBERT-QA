@@ -23,7 +23,8 @@ def main():
               'query': args.query,
               'k': args.k,
               'bert_model_name': 'bert-qa',
-              'device': 'gpu'}
+              'device': 'gpu',
+              'max_seq_len': 512}
 
     FinBERT_QA(config).search()
 

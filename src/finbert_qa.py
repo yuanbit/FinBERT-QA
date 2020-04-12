@@ -770,6 +770,7 @@ class FinBERT_QA():
         # Pre-trained BERT model name
         self.bert_model_name = self.config['bert_model_name']
         self.device = torch.device('cuda' if config['device'] == 'gpu' else 'cpu')
+        self.max_seq_len = self.config['max_seq_len']
         # Load the BERT tokenizer.
         print('\nLoading BERT tokenizer...')
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
