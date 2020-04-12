@@ -18,13 +18,15 @@ from evaluate import *
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(1234)
 
+path = Path.cwd()
+
 # Dictionary mapping of docid and qid to raw text
-docid_to_text = load_pickle(Path.cwd()/'data/id_to_text/docid_to_text.pickle')
-qid_to_text = load_pickle(Path.cwd()/'data/id_to_text/qid_to_text.pickle')
+docid_to_text = load_pickle(path + 'data/id_to_text/docid_to_text.pickle')
+qid_to_text = load_pickle(path + 'data/id_to_text/qid_to_text.pickle')
 # Labels
-labels = load_pickle(Path.cwd()/'data/data_pickle/labels.pickle')
+labels = load_pickle(path + 'data/data_pickle/labels.pickle')
 # Lucene index
-fiqa_index = Path.cwd()/"retriever/lucene-index-fiqa"
+fiqa_index = path + "retriever/lucene-index-fiqa"
 
 class BERT_MODEL():
     """Fine-tuned BERT model for non-factoid question answering.
@@ -47,10 +49,10 @@ class BERT_MODEL():
             model_path = "bert-base-uncased"
         elif self.bert_model_name == "finbert-domain":
             get_model("finbert-domain")
-            model_path = Path.cwd()/'model/finbert-domain'
+            model_path = str(Path.cwd()/'model/finbert-domain')
         elif self.bert_model_name == "finbert-task":
             get_model("finbert-task")
-            model_path = Path.cwd()/'model/finbert-task'
+            model_path = str(Path.cwd()/'model/finbert-task')
         else:
             get_model("bert-qa")
             model_path = Path.cwd()/'model/bert-qa'
@@ -366,7 +368,7 @@ class PointwiseBERT():
             # At each epoch, if the validation loss is the best
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
-                torch.save(self.model.state_dict(), Path.cwd()/'model/' + \
+                torch.save(self.model.state_dict(), path + "/model/" + \
                 str(epoch+1)+ '_pointwise_' + self.config['bert_model_name'] + '.pt')
 
             print("\n\n Epoch {}:".format(epoch+1))
@@ -752,7 +754,7 @@ class PairwiseBERT():
             # At each epoch, if the validation loss is the best
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
-                torch.save(self.model.state_dict(), Path.cwd()/'model/' + \
+                torch.save(self.model.state_dict(), path + '/model/' + \
                 str(epoch+1)+ '_pairwise_' + self.config['bert_model_name'] + '.pt')
 
             print("\n\n Epoch {}:".format(epoch+1))
@@ -889,7 +891,7 @@ class FinBERT_QA():
         if self.config['use_trained_model'] == True:
             # Download model
             model_name = get_trained_model(bert_finetuned_model)
-            model_path = Path.cwd()/"model/trained/" + \
+            model_path = path + "/model/trained/" + \
                          bert_finetuned_model + "/" + model_name
         else:
             model_path = self.config['model_path']
@@ -930,7 +932,7 @@ class FinBERT_QA():
         print("\nRanking...\n")
         # Download model
         model_name = get_trained_model("finbert-qa")
-        model_path = Path.cwd()/"model/trained/finbert-qa/" + model_name
+        model_path = path + "/model/trained/finbert-qa/" + model_name
         # Load model
         self.model.load_state_dict(torch.load(model_path), strict=False)
         self.model.eval()

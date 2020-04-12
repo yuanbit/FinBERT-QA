@@ -16,8 +16,10 @@ from pyserini.search import pysearch
 
 from utils import *
 
+path = Path.cwd()
+
 # Lucene indexer
-fiqa_index = str(Path.cwd()/"retriever/lucene-index-fiqa/")
+fiqa_index = path + "/retriever/lucene-index-fiqa/"
 
 def split_label(qid_docid):
     """

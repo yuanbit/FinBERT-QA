@@ -16,14 +16,16 @@ from evaluate import *
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(1234)
 
+path = Path.cwd()
+
 # Dictonary with token to id mapping
-vocab = load_pickle(Path.cwd()/"data/qa_lstm_tokenizer/word2index.pickle")
+vocab = load_pickle(path + "/data/qa_lstm_tokenizer/word2index.pickle")
 # Dictonary with qid to tokenized text mapping
-qid_to_tokenized_text = load_pickle(Path.cwd()/'data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
+qid_to_tokenized_text = load_pickle(path + '/data/qa_lstm_tokenizer/qid_to_tokenized_text.pickle')
 # Dictionary with docid to tokenized text mapping
-docid_to_tokenized_text = load_pickle(Path.cwd()/'data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
+docid_to_tokenized_text = load_pickle(path + '/data/qa_lstm_tokenizer/docid_to_tokenized_text.pickle')
 # Labels
-labels = load_pickle(Path.cwd()/'data/data_pickle/labels.pickle')
+labels = load_pickle(path + '/data/data_pickle/labels.pickle')
 
 class LSTM_MODEL(nn.Module):
     """
@@ -373,7 +375,7 @@ class QA_LSTM():
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
                 # Save the parameters of the model
-                torch.save(self.model.state_dict(), Path.cwd()/'model/'+str(epoch+1)+'_qa_lstm.pt')
+                torch.save(self.model.state_dict(), path + '/model/'+str(epoch+1)+'_qa_lstm.pt')
 
             print("\n\n Epoch {}:".format(epoch+1))
             print("\t Train Loss: {0:.3f}".format(train_loss))
@@ -433,7 +435,7 @@ class QA_LSTM():
         if self.config['use_trained_model'] == True:
             # Download model
             model_name = get_trained_model("qa-lstm")
-            model_path = Path.cwd()/"model/trained/qa-lstm/" + model_name
+            model_path = path + "/model/trained/qa-lstm/" + model_name
         else:
             model_path = self.config['model_path']
         # Load model
