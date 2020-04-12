@@ -937,9 +937,9 @@ class FinBERT_QA():
             cands.append(int(hits[i].docid))
 
         print("\nRanking...\n")
-        self.rank, self.scores = self.predict(self.model, query, cands)
+        self.rank, self.scores = self.predict(self.model, self.query, cands)
 
-        print("Question: \n\t{}\n".format(query))
+        print("Question: \n\t{}\n".format(self.query))
         print("Top-{} Answers: \n".format(self.k))
         for i in range(0, self.k):
             print("{}.\t{}\n".format(i+1, docid_to_text[self.rank[i]]))
