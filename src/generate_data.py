@@ -1,6 +1,5 @@
 import pandas as pd
 import regex as re
-from pathlib import Path
 import csv
 from itertools import islice
 import pickle
@@ -11,12 +10,14 @@ import sys
 import argparse
 from pathlib import Path
 from sklearn.model_selection import train_test_split
+from pathlib import Path
+# os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-openjdk-amd64"
 from pyserini.search import pysearch
 
 from utils import *
 
 # Lucene indexer
-FIQA_INDEX = Path.cwd()/"retriever/lucene-index-fiqa"
+fiqa_index = str(Path.cwd()/"retriever/lucene-index-fiqa/")
 
 def split_label(qid_docid):
     """
@@ -157,7 +158,7 @@ def create_dataset(question_df, labels, cands_size):
     """
     dataset = []
     # Calls retriever
-    searcher = pysearch.SimpleSearcher(FIQA_INDEX)
+    searcher = pysearch.SimpleSearcher(fiqa_index)
     # For each question
     for i, row in question_df.iterrows():
         qid = row['qid']
