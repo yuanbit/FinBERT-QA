@@ -5,6 +5,7 @@ import random
 import torch
 import json
 import os
+import sys
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from torch.nn.functional import softmax
@@ -932,29 +933,28 @@ class FinBERT_QA():
         hits = searcher.search(self.query, k=50)
 
         cands = []
-
-        if len(cands) == 0:
-        	print("No answers found.")
-        else:
-        	pass
         
         for i in range(0, len(hits)):
             cands.append(int(hits[i].docid))
 
-        print("\nRanking...\n")
-        self.rank, self.scores = self.predict(self.model, self.query, cands)
-
-        print("Question: \n\t{}\n".format(self.query))
-
-        print("Top-{} Answers: \n".format(self.k))
-
-        if len(cands) < self.k:
-        	self.k = len(cands)
+        if len(cands) == 0:
+        	print("No answers found.")
+        	sys.exit()
         else:
-        	pass
-        
-        for i in range(0, self.k):
-            print("{}.\t{}\n".format(i+1, docid_to_text[self.rank[i]]))
+	        print("\nRanking...\n")
+	        self.rank, self.scores = self.predict(self.model, self.query, cands)
+
+	        print("Question: \n\t{}\n".format(self.query))
+
+	        print("Top-{} Answers: \n".format(self.k))
+
+	        if len(cands) < self.k:
+	        	self.k = len(cands)
+	        else:
+	        	pass
+	        
+	        for i in range(0, self.k):
+	            print("{}.\t{}\n".format(i+1, docid_to_text[self.rank[i]]))
 
 
     
