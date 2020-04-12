@@ -21,12 +21,12 @@ torch.manual_seed(1234)
 path = str(Path.cwd())
 
 # Dictionary mapping of docid and qid to raw text
-docid_to_text = load_pickle(path + 'data/id_to_text/docid_to_text.pickle')
-qid_to_text = load_pickle(path + 'data/id_to_text/qid_to_text.pickle')
+docid_to_text = load_pickle(path + '/data/id_to_text/docid_to_text.pickle')
+qid_to_text = load_pickle(path + '/data/id_to_text/qid_to_text.pickle')
 # Labels
-labels = load_pickle(path + 'data/data_pickle/labels.pickle')
+labels = load_pickle(path + '/data/data_pickle/labels.pickle')
 # Lucene index
-fiqa_index = path + "retriever/lucene-index-fiqa"
+fiqa_index = path + "/retriever/lucene-index-fiqa"
 
 class BERT_MODEL():
     """Fine-tuned BERT model for non-factoid question answering.
