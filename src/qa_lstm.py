@@ -37,7 +37,7 @@ class LSTM_MODEL(nn.Module):
         Arguments:
             config: Dictionary
         """
-        super(QA_LSTM, self).__init__()
+        super(LSTM_MODEL, self).__init__()
         # Embedding dimension
         self.emb_dim = config['emb_dim']
         # Hidden size
