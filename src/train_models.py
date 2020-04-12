@@ -6,6 +6,11 @@ from utils import *
 from qa_lstm import *
 from finbert_qa import *
 
+path = str(Path.cwd())
+
+default_train_path = path + '/data/data_pickle/train_set_50.pickle'
+default_valid_path = path + '/data/data_pickle/valid_set_50.pickle'
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -14,9 +19,9 @@ def main():
     help="Specify model type as 'qa-lstm' or 'bert'")
 
     # Optional arguments
-    parser.add_argument("--train_pickle", default=Path.cwd()/'data/data_pickle/train_set_50.pickle', 
+    parser.add_argument("--train_pickle", default= default_train_path, 
                         type=str, required=False, help="Path to training data in .pickle format if use_default_data not called.")
-    parser.add_argument("--valid_pickle", default=Path.cwd()/'data/data_pickle/valid_set_50.pickle', type=str, required=False,\
+    parser.add_argument("--valid_pickle", default= default_valid_path, type=str, required=False,\
                         help="Path to validation data in .pickle format if use_default_data not called.")
 
     parser.add_argument("--device", default='gpu', type=str, required=False,

@@ -6,6 +6,10 @@ from utils import *
 from qa_lstm import *
 from finbert_qa import *
 
+path = str(Path.cwd())
+default_test_path = path + '/data/data_pickle/test_set_50.pickle'
+
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -14,7 +18,7 @@ def main():
     help="Specify model type as 'qa-lstm' or 'bert'")
 
     # Optional arguments
-    parser.add_argument("--test_pickle", default=Path.cwd()/'data/data_pickle/test_set_50.pickle', 
+    parser.add_argument("--test_pickle", default= default_test_path, 
                         type=str, required=False, help="Path to test data in .pickle format if use_default_data not called.")
     parser.add_argument("--use_trained_model", default=False, \
                         action="store_true", \
