@@ -16,7 +16,7 @@ from evaluate import *
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(1234)
 
-path = Path.cwd()
+path = str(Path.cwd())
 
 # Dictonary with token to id mapping
 vocab = load_pickle(path + "/data/qa_lstm_tokenizer/word2index.pickle")

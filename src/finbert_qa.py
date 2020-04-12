@@ -18,7 +18,7 @@ from evaluate import *
 torch.backends.cudnn.deterministic = True
 torch.manual_seed(1234)
 
-path = Path.cwd()
+path = str(Path.cwd())
 
 # Dictionary mapping of docid and qid to raw text
 docid_to_text = load_pickle(path + 'data/id_to_text/docid_to_text.pickle')
@@ -912,6 +912,13 @@ class FinBERT_QA():
         """Search engine. Retrieves and re-ranks the answer candidates given a query.
         Renders the top-k answers for a query.
         """
+        # Download model
+        model_name = get_trained_model("finbert-qa")
+        model_path = path + "/model/trained/finbert-qa/" + model_name
+        # Load model
+        self.model.load_state_dict(torch.load(model_path), strict=False)
+        self.model.eval()
+
         searcher = pysearch.SimpleSearcher(fiqa_index)
         self.k = self.config['k']
 
@@ -930,13 +937,6 @@ class FinBERT_QA():
             cands.append(int(hits[i].docid))
 
         print("\nRanking...\n")
-        # Download model
-        model_name = get_trained_model("finbert-qa")
-        model_path = path + "/model/trained/finbert-qa/" + model_name
-        # Load model
-        self.model.load_state_dict(torch.load(model_path), strict=False)
-        self.model.eval()
-
         self.rank, self.scores = self.predict(self.model, query, cands)
 
         print("Question: \n\t{}\n".format(query))

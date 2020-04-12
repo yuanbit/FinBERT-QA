@@ -16,7 +16,7 @@ from pyserini.search import pysearch
 
 from utils import *
 
-path = Path.cwd()
+path = str(Path.cwd())
 
 # Lucene indexer
 fiqa_index = path + "/retriever/lucene-index-fiqa/"
