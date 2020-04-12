@@ -926,13 +926,17 @@ class FinBERT_QA():
         if self.config['user_input'] == True:
             # Ask the user for a keyword query.
             self.query = input("\nPlease enter your question: ")
-            print("\n")
         else:
             self.query = self.config['query']
 
         hits = searcher.search(self.query, k=50)
 
         cands = []
+
+        if len(cands) == 0:
+        	print("No answers found.")
+        else:
+        	pass
         
         for i in range(0, len(hits)):
             cands.append(int(hits[i].docid))
@@ -941,7 +945,14 @@ class FinBERT_QA():
         self.rank, self.scores = self.predict(self.model, self.query, cands)
 
         print("Question: \n\t{}\n".format(self.query))
+
         print("Top-{} Answers: \n".format(self.k))
+
+        if len(cands) < self.k:
+        	self.k = len(cands)
+        else:
+        	pass
+        
         for i in range(0, self.k):
             print("{}.\t{}\n".format(i+1, docid_to_text[self.rank[i]]))
 
