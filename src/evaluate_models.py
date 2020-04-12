@@ -41,7 +41,6 @@ def main():
     args = parser.parse_args()
 
     config = {'model_type': args.model_type,
-              'use_default_data': args.use_default_data,
               'test_set': args.test_pickle,
               'train_set': None,
               'valid_set':None,
