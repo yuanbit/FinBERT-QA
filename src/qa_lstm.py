@@ -355,7 +355,7 @@ class QA_LSTM():
         # Number of epochs
         self.n_epochs = self.config['n_epochs']
 
-        print("\nGenerating training and validation data...")
+        print("\nGenerating training and validation data...\n")
         train_dataloader = self.get_dataloader(self.train_set, "train")
         validation_dataloader = self.get_dataloader(self.valid_set, "validation")
 

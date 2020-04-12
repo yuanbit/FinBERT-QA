@@ -164,7 +164,7 @@ class PointwiseBERT():
         """
         # Create input data
         input_id, token_type_id, \
-        att_mask, label = self.get_input_data(dataset, self.max_seq_len)
+        att_mask, label = self.get_input_data(dataset)
 
         # Convert all inputs to torch tensors
         input_ids = torch.tensor(input_id)
@@ -357,7 +357,7 @@ class PointwiseBERT():
         best_valid_loss = float('inf')
 
         print("\nTraining model...\n")
-        for epoch in range(self.n_epochs):
+        for epoch in range(n_epochs):
             # Evaluate training loss
             train_loss, train_acc = self.train(self.model, \
                                                train_dataloader, \
@@ -723,6 +723,9 @@ class PairwiseBERT():
     def train_pairwise(self):
         """Train and validate the model and print the average loss and accuracy.
         """
+        # Number of epochs
+        n_epochs = self.config['n_epochs']
+
         # Generate training and validation data
         print("\nGenerating training and validation data...\n")
         self.train_dataloader = self.get_dataloader(self.train_set, "train")
@@ -743,7 +746,7 @@ class PairwiseBERT():
         best_valid_loss = float('inf')
 
         print("\nTraining model...\n")
-        for epoch in range(self.n_epochs):
+        for epoch in range(n_epochs):
             # Evaluate training loss
             train_loss, train_acc = self.train(self.model, \
                                                self.train_dataloader, \
@@ -782,7 +785,7 @@ class FinBERT_QA():
     def run_train(self):
         """Train and validate the model.
         """
-        optimizer = AdamW(model.parameters(), lr = self.config['lr'], \
+        optimizer = AdamW(self.model.parameters(), lr = self.config['lr'], \
                           weight_decay=self.config['weight_decay'])
         learning_approach = self.config['learning_approach']
 
@@ -954,8 +957,3 @@ class FinBERT_QA():
             print("Top-{} Answers: \n".format(self.k))
             for i in range(0, self.k):
                 print("{}.\t{}\n".format(i+1, docid_to_text[self.rank[i]]))
-
-
-    
-
-    
