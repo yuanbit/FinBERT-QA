@@ -7,6 +7,9 @@ from qa_lstm import *
 from finbert_qa import *
 
 path = str(Path.cwd())
+
+default_train_path = path + '/data/data_pickle/train_set_50.pickle'
+default_valid_path = path + '/data/data_pickle/valid_set_50.pickle'
 default_test_path = path + '/data/data_pickle/test_set_50.pickle'
 
 
@@ -46,8 +49,8 @@ def main():
 
     config = {'model_type': args.model_type,
               'test_set': args.test_pickle,
-              'train_set': None,
-              'valid_set':None,
+              'train_set': default_train_path,
+              'valid_set': default_valid_path,
               'use_trained_model': args.use_trained_model,
               'bert_model_name': args.bert_model_name,
               'bert_finetuned_model': args.bert_finetuned_model,

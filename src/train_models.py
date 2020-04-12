@@ -10,6 +10,7 @@ path = str(Path.cwd())
 
 default_train_path = path + '/data/data_pickle/train_set_50.pickle'
 default_valid_path = path + '/data/data_pickle/valid_set_50.pickle'
+default_test_path = path + '/data/data_pickle/test_set_50.pickle'
 
 def main():
     parser = argparse.ArgumentParser()
@@ -60,7 +61,7 @@ def main():
     config = {'model_type': args.model_type,
               'train_set': args.train_pickle,
               'valid_set': args.valid_pickle,
-              'test_set': None,
+              'test_set': default_test_path,
               'device': args.device,
               'max_seq_len': args.max_seq_len,
               'batch_size': args.batch_size,
