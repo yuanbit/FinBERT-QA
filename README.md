@@ -5,8 +5,13 @@ If no GPU is available, an alternative and low-effort way to train a QA-LSTM mod
 
 ### With Docker
 This repo can be used as a container with [Docker](https://www.docker.com/). Run the commands as root if Docker not configured.
+
+Docker pull command
 ```
 docker pull yuanbit/finbert_qa
+```
+Run
+```
 docker run --runtime=nvidia -it yuanbit/finbert_qa
 ```
 ## Usage
