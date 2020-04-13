@@ -1,7 +1,7 @@
 # FinBERT-QA: Financial Question Answering using BERT
 
 ## Installation
-If no GPU available, an alternative and low-effort way to train a QA-LSTM model and fine-tune a pre-trained BERT model for the Opionated Financial Question and Answering [FiQA](https://sites.google.com/view/fiqa) dataset is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
+If no GPU is available, an alternative and low-effort way to train a QA-LSTM model and fine-tune a pre-trained BERT model for the Opionated Financial Question and Answering [FiQA](https://sites.google.com/view/fiqa) dataset is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
 
 ### With Docker
 This repo can be used as a container with [Docker](https://www.docker.com/). Run the commands as root if Docker not configured.
