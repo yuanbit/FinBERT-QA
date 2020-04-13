@@ -4,6 +4,24 @@ import math
 import numpy as np
 from itertools import islice
 
+def get_rel(labels, cands):
+    """Get relevant positions of the hits.
+
+    Returns: List of 0's and 1's incidating a relevant answer
+    -------------------
+    Arguments:
+        labels: List of relevant docids
+        cands: List of candidate docids
+    """
+    rel = []
+    for cand in cands:
+        if cand in labels:
+            rel.append(1)
+        else:
+            rel.append(0)
+
+    return rel
+
 def dcg(rels, k):
     """
     Discounted Cumulative Gain. Computes the cumulated DCG of the top-k
