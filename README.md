@@ -1,10 +1,15 @@
-work in progress....
+# FinBERT-QA: Financial Question Answering using BERT
+A low-effort way (no installation and access to free GPU) to see the details of training a QA-LSTM model and fine-tuning a pre-trained BERT model for the Opionated Financial Question and Answering [FiQA](https://sites.google.com/view/fiqa) dataset is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
 
+## Installation
+work in progress
+
+## Usage
 * [Train](#train)
 * [Evaluate](#evaluate)
 * [Predict](#predict)
 
-## Train
+### Train
 ```
 python3 src/train_models.py  [--model_type MODEL_TYPE] [--train_pickle TRAIN_PICKLE] \
                              [--valid_pickle VALID_PICKLE] [--device DEVICE] \
@@ -70,7 +75,7 @@ python3 src/train_models.py --model_type 'qa-lstm' \
                             --n_epochs 3 \
                             --lr 1e-3
 ```
-## Evaluate
+### Evaluate
 ```
 python3 src/evaluate_models.py  [--model_type MODEL_TYPE] [--test_pickle TEST_PICKLE] \
                                 [--bert_model_name BERT_MODEL_NAME] \
@@ -100,7 +105,7 @@ python3 src/evaluate_models.py --test_pickle data/data_pickle/test_set_50.pickle
                                 --bert_finetuned_model 'finbert-qa' \
                                 --use_trained_model 
 ```
-## Predict
+### Predict
 ```
 python3 src/predict.py  [--user_input] [--query QUERY] [--k K]
 
