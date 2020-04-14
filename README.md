@@ -18,7 +18,7 @@ The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results w
   * [Evaluate](#evaluate)
   * [Predict](#predict)
   * [Generate data](#generate-data)
-* [Code Structure](#code-structure)
+* [Folder Structure](#file-structure)
 * [Contact](#contact)
 
 ## Installation
@@ -242,12 +242,15 @@ Arguments:
   CANDS_SIZE - Number of candidates to retrieve per question.
   OUTPUT_DIR - The output directory where the generated data will be stored.                      
 ```
-## Code Structure
+## Folder Structure
     .
-    ├── ...
-    ├── notebooks
+    ├── data                          # Files for FinBERT-QA
+    |   └── ...                       
+    ├── notebooks                     # Jupyter notebooks
     │   ├── Process_Data.ipynb        # Loadds, cleans, and processes data
     │   └── Retriever_Analysis.ipynb  # Evaluates and analyzes the results from the retriever
+    ├── retriever                     # Files for the retriever
+    |   └── ... 
     ├── src                           # Source files
     │   ├── evaluate.py               # Evaluation metrics - nDCG@k, MRR@k, Precision@k
     │   ├── evaluate_models.py        # Configures evaluation parameters
