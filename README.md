@@ -11,7 +11,7 @@ Built using Huggingface's [transformers](https://github.com/huggingface/transfor
 * [Installation](#installation)
 * [Quickstart](#quickstart)
 * [Retriever](#retriever)
-* [Data](#data)
+* [Dataset](#data)
 * [Models](#models)
 * [Basic Usage](#basic-usage)
   * [Train](#train)
@@ -59,7 +59,7 @@ cd retriever
 git clone https://github.com/castorini/anserini.git
 sh indexer.sh
 ```
-## Data
+## Dataset
 The [raw dataset](https://sites.google.com/view/fiqa) has been cleaned and split into training, validation, and test sets in the form of lists where each sample is a list of```[question id, [label answer ids], [answer candidate ids]]```. There are  The datasets are stored in the pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see usage.```data/data_pickle``` is a pickle file consisting of a python dictionary where the keys are the question ids and the values are lists of relevant answer ids.
 
 Since creating inputs for to fine-tune a pre-trained BERT model can take some time, sample datasets are provided in ```data/sample/``` for testing.
