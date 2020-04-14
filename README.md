@@ -1,5 +1,5 @@
 # FinBERT-QA: Financial Question Answering using BERT
-FinBERT-QA is a search engine for retrieving opinionated financial text using task 2 of the [FiQA](https://sites.google.com/view/fiqa) dataset. The system uses techniques from both information retrieval and natural language processing by first retrieving the top-50 answer candidates of each query using the Lucene toolkit, [Anserini](https://github.com/castorini/anserini), then re-ranking the answer candidates using variants of pre-trained [BERT](https://arxiv.org/pdf/1810.04805.pdf) models. FinBERT-QA improved the [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results by an average of 20% on three ranking evaluation metrics.
+FinBERT-QA is a Question Answering search engine for retrieving opinionated financial text using task 2 of the [FiQA](https://sites.google.com/view/fiqa) dataset. The system uses techniques from both information retrieval and natural language processing by first retrieving the top-50 answer candidates of each query using the Lucene toolkit, [Anserini](https://github.com/castorini/anserini), then re-ranking the answer candidates using variants of pre-trained [BERT](https://arxiv.org/pdf/1810.04805.pdf) models. FinBERT-QA improved the [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results by an average of 20% on three ranking evaluation metrics.
 
 Built using Huggingface's [transformer](https://github.com/huggingface/transformers) and the transfer and adapt [[TANDA](https://arxiv.org/pdf/1911.04118.pdf)] method, FinBERT-QA first transfers and fine-tunes a pre-trained BERT model to a general QA task, then adapts this model to the financial domain using the FiQA dataset. The transfer step uses the fine-tuned BERT model on the [MS MACRO Passage Retrieval](https://microsoft.github.io/msmarco/) dataset from [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf), where it was converted from a TensorFlow to PyTorch model.
 
@@ -18,7 +18,7 @@ docker pull yuanbit/finbert_qa
 docker run --runtime=nvidia -it yuanbit/finbert_qa
 ```
 ## Quickstart
-Run to query the top-k opinionated answers from financial domain
+Run to query the top-k opinionated answers from the financial domain
 ```
 python3 src/predict.py --user_input --k 5
 ```
