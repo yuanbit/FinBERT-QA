@@ -247,7 +247,7 @@ Arguments:
     ├── data                          # Files for FinBERT-QA
     |   └── ...                       
     ├── notebooks                     # Jupyter notebooks
-    │   ├── Process_Data.ipynb        # Loadds, cleans, and processes data
+    │   ├── Process_Data.ipynb        # Loads, cleans, and processes data
     │   └── Retriever_Analysis.ipynb  # Evaluates and analyzes the results from the retriever
     ├── retriever                     # Files for the retriever
     |   └── ... 
