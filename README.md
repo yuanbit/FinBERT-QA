@@ -10,6 +10,7 @@ Built using Huggingface's [transformer](https://github.com/huggingface/transform
 ## Sections
 * [Installation](#installation)
 * [Quickstart](#quickstart)
+* [Retriever](#retriever)
 * [Data](#data)
 * [Models](#models)
 * [Basic Usage](#basic-usage)
@@ -51,6 +52,13 @@ Sample questions:
 • Are credit histories/scores international?
 ```
 
+## Retriever
+The retriever uses the BM25 implementation from [Anserini](https://github.com/castorini/anserini). To replicate the creation of Lucene index for the FiQA dataset run the following inside the docker image:
+```
+cd retriever
+git clone https://github.com/castorini/anserini.git
+sh indexer.sh
+```
 ## Data
 The [raw dataset](https://sites.google.com/view/fiqa) has been cleaned and split into training, validation, and test sets in the form of lists where each sample is a list of```[question id, [label answer ids], [answer candidate ids]]```. There are  The datasets are stored in the pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see usage.```data/data_pickle``` is a pickle file consisting of a python dictionary where the keys are the question ids and the values are lists of relevant answer ids.
 
