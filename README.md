@@ -6,8 +6,7 @@ The system uses techniques from both information retrieval and natural language 
 The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results were improved by an average of ~20% on three ranking evaluation metrics.
 
 Built using Huggingface's [transformers](https://github.com/huggingface/transformers) library and the transfer and adapt [[TANDA](https://arxiv.org/pdf/1911.04118.pdf)] method, FinBERT-QA first transfers and fine-tunes a pre-trained BERT model to a general QA task, then adapts this model to the financial domain using the FiQA dataset. The transfer step uses the fine-tuned BERT model on the [MS MACRO Passage Retrieval](https://microsoft.github.io/msmarco/) dataset from [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf), where it was converted from a TensorFlow to PyTorch model.
-
-## Sections
+## Contents
 * [Installation](#installation)
 * [Quickstart](#quickstart)
 * [Retriever](#retriever)
@@ -18,16 +17,17 @@ Built using Huggingface's [transformers](https://github.com/huggingface/transfor
   * [Evaluate](#evaluate)
   * [Predict](#predict)
   * [Generate data](#generate-data)
+* [Contact](#contact)
 
 ## Installation
 If no GPU is available, an alternative and low-effort way to train and evaluate a model as well as predicting the results is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
 
 ### With Docker
-This repo can be used as a container with [Docker](https://www.docker.com/). Run the commands as root if Docker is not configured.
+This repo can be used as a container with [Docker](https://www.docker.com/). This is does not require or use a locally checked out copy of FinBERT-QA. Run the commands as root if Docker is not configured.
 
 #### Docker pull command
 ```
-docker pull yuanbit/finbert_qa
+docker pull yuanbit/finbert_qa:1.0
 ```
 #### Run
 ```
@@ -240,3 +240,5 @@ Arguments:
   CANDS_SIZE - Number of candidates to retrieve per question.
   OUTPUT_DIR - The output directory where the generated data will be stored.                      
 ```
+## Contact
+[Bithiah Yuan](bithiahy[at]gmail.com)
