@@ -23,7 +23,7 @@ Built using Huggingface's [transformers](https://github.com/huggingface/transfor
 If no GPU is available, an alternative and low-effort way to train and evaluate a model as well as predicting the results is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
 
 ### With Docker
-This repo can be used as a container with [Docker](https://www.docker.com/). Run the commands as root if Docker not configured.
+This repo can be used as a container with [Docker](https://www.docker.com/). Run the commands as root if Docker is not configured.
 
 #### Docker pull command
 ```
