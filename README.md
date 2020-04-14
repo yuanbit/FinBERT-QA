@@ -11,7 +11,7 @@ Built using Huggingface's [transformers](https://github.com/huggingface/transfor
 * [Installation](#installation)
 * [Quickstart](#quickstart)
 * [Retriever](#retriever)
-* [Dataset](#data)
+* [Dataset](#dataset)
 * [Models](#models)
 * [Basic Usage](#basic-usage)
   * [Train](#train)
@@ -53,18 +53,18 @@ Sample questions:
 ```
 
 ## Retriever
-The retriever uses the BM25 implementation from [Anserini](https://github.com/castorini/anserini). To replicate the creation of Lucene index for the FiQA dataset run the following inside the docker image:
+The retriever uses the BM25 implementation from [Anserini](https://github.com/castorini/anserini). To replicate the creation of the Lucene index for the FiQA dataset run the following inside the docker image:
 ```
 cd retriever
 git clone https://github.com/castorini/anserini.git
 sh indexer.sh
 ```
 ## Dataset
-The [raw dataset](https://sites.google.com/view/fiqa) has been cleaned and split into training, validation, and test sets in the form of lists where each sample is a list of```[question id, [label answer ids], [answer candidate ids]]```. There are  The datasets are stored in the pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see usage.```data/data_pickle``` is a pickle file consisting of a python dictionary where the keys are the question ids and the values are lists of relevant answer ids.
+The [raw dataset](https://sites.google.com/view/fiqa) has been cleaned and split into training, validation, and test sets in the form of lists where each sample is a list of ```[question id, [label answer ids], [answer candidate ids]]```. The datasets are stored in the pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see [Generate data](#generate-data). ```data/data_pickle``` is a pickle file consisting of a python dictionary where the keys are the question ids and the values are lists of relevant answer ids.
 
-Since creating inputs for to fine-tune a pre-trained BERT model can take some time, sample datasets are provided in ```data/sample/``` for testing.
+Since creating inputs to fine-tune a pre-trained BERT model can take some time, sample datasets are provided in ```data/sample/``` for testing.
 
-Example QA:
+Example QA pair:
 ```
 Question: Why are big companies like Apple or Google not included in the Dow Jones Industrial Average (DJIA) index?
 
@@ -72,7 +72,7 @@ Answer: That is a pretty exclusive club and for the most part they are not inter
 ```
 
 ## Models
-The download of the pre-trained and fine-tuned models are automated by the scripts. As an alternative they can also be downloaded manually. Make sure you are inside the ```FinBERT-QA``` directory.
+Downloading pre-trained and fine-tuned models are automated by the scripts. As an alternative they can also be downloaded manually. Make sure you are inside the ```FinBERT-QA``` directory.
 ### Pre-trained BERT models
 For training usage.
 * ```'bert-qa'```: pre-trained BERT model fine-tuned on the MS Macro passage dataset of [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf)
@@ -86,7 +86,7 @@ get_model('bert-qa')
 ``` 
 The model will be downloaded in ```model/bert-qa/```
 
-### Trained baseline QA-LSTM and fine-tuned BERT models
+### Trained models
 For evaluation and prediction usage.
 * ```'finbert-qa'```: ```'bert-qa'``` fine-tuned on FiQA
 * ```'finbert-domain'```: ```'finbert-domain'``` fine-tuned on FiQA
@@ -178,10 +178,10 @@ Arguments:
 #### Evaluate FinBERT-QA
 ```
 python3 src/evaluate_models.py --test_pickle data/data_pickle/test_set_50.pickle \
-                                --model_type 'bert' \
-                                --max_seq_len 512 \
-                                --bert_finetuned_model 'finbert-qa' \
-                                --use_trained_model 
+                               --model_type 'bert' \
+                               --max_seq_len 512 \
+                               --bert_finetuned_model 'finbert-qa' \
+                               --use_trained_model 
 ```
 Detailed Usage
 ```
@@ -238,6 +238,5 @@ Arguments:
   QUERY_PATH - Path to the question id to text data in .tsv format. Each line should have at least two columns named (qid, question) separated by tab
   LABEL_PATH - Path to the question id and answer id data in .tsv format. Each line should have at two columns named (qid, docid) separated by tab
   CANDS_SIZE - Number of candidates to retrieve per question.
-  OUTPUT_DIR - The output directory where the generated data will be stored.
-                             
+  OUTPUT_DIR - The output directory where the generated data will be stored.                      
 ```
