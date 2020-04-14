@@ -7,6 +7,17 @@ The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results w
 
 Built using Huggingface's [transformer](https://github.com/huggingface/transformers) library and the transfer and adapt [[TANDA](https://arxiv.org/pdf/1911.04118.pdf)] method, FinBERT-QA first transfers and fine-tunes a pre-trained BERT model to a general QA task, then adapts this model to the financial domain using the FiQA dataset. The transfer step uses the fine-tuned BERT model on the [MS MACRO Passage Retrieval](https://microsoft.github.io/msmarco/) dataset from [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf), where it was converted from a TensorFlow to PyTorch model.
 
+## Sections
+* [Installation](#installation)
+* [Quickstart](#quickstart)
+* [Data](#data)
+* [Models](#models)
+* [Basic Usage](#basic-usage)
+  * [Train](#train)
+  * [Evaluate](#evaluate)
+  * [Predict](#predict)
+  * [Generate data](#generate-data)
+
 ## Installation
 If no GPU is available, an alternative and low-effort way to train and evaluate a model as well as predicting the results is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
 
@@ -86,7 +97,7 @@ The model will be downloaded in ```model/trained/finbert-qa/```
 * [Train](#train)
 * [Evaluate](#evaluate)
 * [Predict](#predict)
-* [Generate data](#generate)
+* [Generate data](#generate-data)
 
 ### Train
 #### `src/train_models.py`: trains and fine-tunes model
@@ -186,7 +197,8 @@ Arguments:
   HIDDEN_SIZE - Hidden size. Specify only if model_type is 'qa-lstm'
   DROPOUT - Dropout rate. Specify only if model_type is 'qa-lstm'
 ```
-### Predict: Answer Re-ranking with FinBERT-QA
+### Predict
+#### Answer Re-ranking with FinBERT-QA
 #### `src/predict.py`: given a query, retrieves the top-50 candidate answers and re-ranks them with the FinBERT-QA model
 Retrieve the top-5 answers for a user given query
 ```
