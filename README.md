@@ -1,7 +1,10 @@
 # FinBERT-QA: Financial Question Answering using BERT
+FinBERT-QA is a search engine for retrieving opinionated financial text using task 2 of the [FiQA](https://sites.google.com/view/fiqa) dataset. The system uses techniques from both information retrieval and natural language processing by first retrieving the top-50 answer candidates of each query using the Lucene toolkit, [Anserini](https://github.com/castorini/anserini), then re-ranking the answer candidates using variants of pre-trained [BERT](https://arxiv.org/pdf/1810.04805.pdf) models. FinBERT-QA improved the [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results by an average of 20% on three ranking evaluation metrics.
+
+Built using Huggingface's [transformer](https://github.com/huggingface/transformers) and the transfer and adapt [[TANDA](https://arxiv.org/pdf/1911.04118.pdf)] method, FinBERT-QA first transfers and fine-tunes a pre-trained BERT model to a general QA task, then adapts this model to the financial domain using the FiQA dataset. The transfer step uses the fine-tuned BERT model on the [MS MACRO Passage Retrieval](https://microsoft.github.io/msmarco/) dataset from [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf), where it was converted from a TensorFlow to PyTorch model.
 
 ## Installation
-If no GPU is available, an alternative and low-effort way to train a QA-LSTM model and fine-tune a pre-trained BERT model for the Opionated Financial Question and Answering [FiQA](https://sites.google.com/view/fiqa) dataset is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
+If no GPU is available, an alternative and low-effort way to train and evaluate a model as well as predicting the results is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
 
 ### With Docker
 This repo can be used as a container with [Docker](https://www.docker.com/). Run the commands as root if Docker not configured.
@@ -14,10 +17,40 @@ docker pull yuanbit/finbert_qa
 ```
 docker run --runtime=nvidia -it yuanbit/finbert_qa
 ```
+## Quickstart
+Run to query the top-k opinionated answers from financial domain
+```
+python3 src/predict.py --user_input --k 5
+```
+Sample questions:
+```
+• Getting financial advice: Accountant vs. Investment Adviser vs. Internet/self-taught?
+• Are individual allowed to use accrual based accounting for federal income tax?
+• What are 'business fundamentals'?
+• How would IRS treat reimbursement in a later year of moving expenses?
+• Can I claim mileage for traveling to a contract position?
+• Tax planning for Indian TDS on international payments
+• Should a retail trader bother about reading SEC filings
+• Why are American Express cards are not as popular as Visa or MasterCard?
+• Why do companies have a fiscal year different from the calendar year?
+• Are credit histories/scores international?
+```
+
+## Data
+The [raw dataset](https://sites.google.com/view/fiqa) has cleaned and split into training, validation, and test sets in the form of lists where each sample is in the form of ```[question id, [label answer ids], [answer candidate ids]]```. The datasets are stored in pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see usage.
+
+Sample QA:
+```
+Question: Why are big companies like Apple or Google not included in the Dow Jones Industrial Average (DJIA) index?
+
+Answer: That is a pretty exclusive club and for the most part they are not interested in highly volatile companies like Apple and Google. Sure, IBM is part of the DJIA, but that is about as stalwart as you can get these days. The typical profile for a DJIA stock would be one that pays fairly predictable dividends, has been around since money was invented, and are not going anywhere unless the apocalypse really happens this year. In summary, DJIA is the boring reliable company index.
+```
+
 ## Usage
 * [Train](#train)
 * [Evaluate](#evaluate)
 * [Predict](#predict)
+* [Generate data](#generate)
 
 ### Train
 ```
