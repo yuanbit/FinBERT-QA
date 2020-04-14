@@ -41,7 +41,7 @@ Sample questions:
 ```
 
 ## Data
-The [raw dataset](https://sites.google.com/view/fiqa) has cleaned and split into training, validation, and test sets in the form of lists where each sample is in the form of ```[question id, [label answer ids], [answer candidate ids]]```. The datasets are stored in pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see usage.
+The [raw dataset](https://sites.google.com/view/fiqa) has been cleaned and split into training, validation, and test sets in the form of lists where each sample is a list of```[question id, [label answer ids], [answer candidate ids]]```. The datasets are stored in the pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see usage.
 
 Sample QA:
 ```
