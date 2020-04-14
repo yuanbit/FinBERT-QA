@@ -18,6 +18,7 @@ The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results w
   * [Evaluate](#evaluate)
   * [Predict](#predict)
   * [Generate data](#generate-data)
+* [Code Structure](#code-structure)
 * [Contact](#contact)
 
 ## Installation
@@ -241,5 +242,23 @@ Arguments:
   CANDS_SIZE - Number of candidates to retrieve per question.
   OUTPUT_DIR - The output directory where the generated data will be stored.                      
 ```
+## Code Structure
+    .
+    ├── ...
+    ├── notebooks
+    │   ├── Process_Data.ipynb        # Loadds, cleans, and processes data
+    │   └── Retriever_Analysis.ipynb  # Evaluates and analyzes the results from the retriever
+    ├── src                           # Source files
+    │   ├── evaluate.py               # Evaluation metrics - nDCG@k, MRR@k, Precision@k
+    │   ├── evaluate_models.py        # Configures evaluation parameters
+    |   ├── finbert_qa.py             # Creates pre-trained BERT model, fine-tunes, evaluates, and makes predictions
+    |   ├── generate_data.py          # Generates train, validation, and test sets using the retriever
+    |   ├── predict.py                # Configures prediction parameters
+    |   ├── process_data.py           # Functions to process data, create vocabulary, and tokenizers for the QA-LSTM model
+    |   ├── qa_lstm.py                # Creates, trains, and evaluates a QA-LSTM model
+    |   ├── train_models.py           # Configures training parameters
+    │   └── utils.py                  # Helper functions
+    └── ...
+ 
 ## Contact
 ```[Bithiah Yuan](bithiahy[at]gmail.com)```
