@@ -41,22 +41,90 @@ Sample questions:
 ```
 
 ## Data
-The [raw dataset](https://sites.google.com/view/fiqa) has been cleaned and split into training, validation, and test sets in the form of lists where each sample is a list of```[question id, [label answer ids], [answer candidate ids]]```. The datasets are stored in the pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see usage.
+The [raw dataset](https://sites.google.com/view/fiqa) has been cleaned and split into training, validation, and test sets in the form of lists where each sample is a list of```[question id, [label answer ids], [answer candidate ids]]```. There are  The datasets are stored in the pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see usage.```data/data_pickle``` is a pickle file consisting of a python dictionary where the keys are the question ids and the values are lists of relevant answer ids.
 
-Sample QA:
+Since creating inputs for to fine-tune a pre-trained BERT model can take some time, sample datasets are provided in ```data/sample/``` for testing.
+
+Example QA:
 ```
 Question: Why are big companies like Apple or Google not included in the Dow Jones Industrial Average (DJIA) index?
 
 Answer: That is a pretty exclusive club and for the most part they are not interested in highly volatile companies like Apple and Google. Sure, IBM is part of the DJIA, but that is about as stalwart as you can get these days. The typical profile for a DJIA stock would be one that pays fairly predictable dividends, has been around since money was invented, and are not going anywhere unless the apocalypse really happens this year. In summary, DJIA is the boring reliable company index.
 ```
 
-## Usage
+## Models
+The download of the pre-trained and fine-tuned models are automated by the scripts. As an alternative they can also be downloaded manually. Make sure you are inside the ```FinBERT-QA``` directory.
+### Pre-trained BERT models
+For training usage.
+* ```'bert-qa'```: pre-trained BERT model fine-tuned on the MS Macro passage dataset of [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf)
+* ```'finbert-domain'```: further pre-trained BERT model of [Araci](https://arxiv.org/pdf/1908.10063.pdf) on a large financial corpus
+* ```'finbert-task'```: further pre-trained BERT model on the FiQA dataset
+* ```'bert-base'```: ```'bert-base-uncased'``` model from [transformers](https://github.com/huggingface/transformers)
+```python
+from src.utils import *
+
+get_model('bert-qa')
+``` 
+The model will be downloaded in ```model/bert-qa/```
+
+### Trained baseline QA-LSTM and fine-tuned BERT models
+For evaluation and prediction usage.
+* ```'finbert-qa'```: ```'bert-qa'``` fine-tuned on FiQA
+* ```'finbert-domain'```: ```'finbert-domain'``` fine-tuned on FiQA
+* ```'finbert-task'```: ```'finberr-task'``` fine-tuned on FiQA
+* ```'bert-pointwise'```: ```'bert-base-uncase'``` fine-tuned on FiQA using the cross-entropy loss
+* ```'bert-pairwise'```: ```'bert-base-uncase'``` fine-tuned on FiQA using a pairwise loss
+* ```'qa-lstm'```: QA-LSTM model
+```python
+from src.utils import *
+
+get_trained_model('finbert-qa')
+``` 
+The model will be downloaded in ```model/trained/finbert-qa/```
+
+## Basic Usage
 * [Train](#train)
 * [Evaluate](#evaluate)
 * [Predict](#predict)
 * [Generate data](#generate)
 
 ### Train
+#### `src/train_models.py`: trains and fine-tunes model
+#### Train and fine-tune FinBERT-QA with pointwise learning approach
+This example code further fine-tunes [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf)'s BERT model on the FiQA dataset using the pointwise learning approach (cross-entropy loss).
+```
+python3 src/train_models.py --model_type 'bert' 
+                            --train_pickle data/data_pickle/train_set_50.pickle \
+                            --valid_pickle data/data_pickle/valid_set_50.pickle \
+                            --bert_model_name 'bert-qa' \
+                            --learning_approach 'pointwise' \
+                            --max_seq_len 512 \
+                            --batch_size 16 \
+                            --n_epochs 3 \
+                            --lr 3e-6 \
+                            --weight_decay 0.01 \
+                            --num_warmup_steps 10000
+```
+Training with these hyperparameters produced the SOTA results:
+```
+MRR@10: 0.436
+nDCG@10: 0.482
+P@1: 0.366
+```
+#### Train a baseline QA-LSTM model
+```
+python3 src/train_models.py --model_type 'qa-lstm' \
+                            --train_pickle data/data_pickle/train_set_50.pickle \
+                            --valid_pickle data/data_pickle/valid_set_50.pickle \
+                            --emb_dim 100 \
+                            --hidden_size 256 \
+                            --max_seq_len 128 \
+                            --batch_size 64 \
+                            --n_epochs 3 \
+                            --lr 1e-3 \
+                            --dropout 0.2
+```
+Detailed Usage
 ```
 python3 src/train_models.py  [--model_type MODEL_TYPE] [--train_pickle TRAIN_PICKLE] \
                              [--valid_pickle VALID_PICKLE] [--device DEVICE] \
@@ -86,43 +154,17 @@ Arguments:
   WEIGHT_DECAY - Weight decay. Specify only if model_type is 'bert'
   NUM_WARMUP_STEPS - Number of warmup steps. Specify only if model type is 'bert'
 ```
-#### Example - Train and fine-tune FinBERT-QA with pointwise learning approach
-```
-python3 src/train_models.py --model_type 'bert' 
-                            --train_pickle data/data_pickle/train_set_50.pickle \
-                            --valid_pickle data/data_pickle/valid_set_50.pickle \
-                            --bert_model_name 'bert-qa' \
-                            --learning_approach 'pointwise' \
-                            --max_seq_len 512 \
-                            --batch_size 16 \
-                            --n_epochs 3 \
-                            --lr 3e-6
-```
-
-#### Example - Train and fine-tune BERT further pre-trained on the FiQA task dataset with pairwise learning approach
-```
-python3 src/train_models.py --model_type 'bert' 
-                            --train_pickle data/data_pickle/train_set_50.pickle \
-                            --valid_pickle data/data_pickle/valid_set_50.pickle \
-                            --bert_model_name 'finbert-task' \
-                            --learning_approach 'pairwise' \
-                            --max_seq_len 128 \
-                            --batch_size 32 \
-                            --n_epochs 3 \
-                            --lr 3e-6
-```
-
-#### Example - Train QA-LSTM
-```
-python3 src/train_models.py --model_type 'qa-lstm' \
-                            --train_pickle data/data_pickle/train_set_50.pickle \
-                            --valid_pickle data/data_pickle/valid_set_50.pickle \
-                            --max_seq_len 128 \
-                            --batch_size 64 \
-                            --n_epochs 3 \
-                            --lr 1e-3
-```
 ### Evaluate
+#### `src/evaluate_models.py`: evaluates the models
+#### Evaluate FinBERT-QA
+```
+python3 src/evaluate_models.py --test_pickle data/data_pickle/test_set_50.pickle \
+                                --model_type 'bert' \
+                                --max_seq_len 512 \
+                                --bert_finetuned_model 'finbert-qa' \
+                                --use_trained_model 
+```
+Detailed Usage
 ```
 python3 src/evaluate_models.py  [--model_type MODEL_TYPE] [--test_pickle TEST_PICKLE] \
                                 [--bert_model_name BERT_MODEL_NAME] \
@@ -144,15 +186,13 @@ Arguments:
   HIDDEN_SIZE - Hidden size. Specify only if model_type is 'qa-lstm'
   DROPOUT - Dropout rate. Specify only if model_type is 'qa-lstm'
 ```
-#### Example - Evaluate FinBERT-QA - fine-tuned on [Nogueira and Cho's](https://arxiv.org/pdf/1901.04085.pdf) MS MACRO model
+### Predict: Answer Re-ranking with FinBERT-QA
+#### `src/predict.py`: given a query, retrieves the top-50 candidate answers and re-ranks them with the FinBERT-QA model
+Retrieve the top-5 answers for a user given query
 ```
-python3 src/evaluate_models.py --test_pickle data/data_pickle/test_set_50.pickle \
-                                --model_type 'bert' \
-                                --max_seq_len 512 \
-                                --bert_finetuned_model 'finbert-qa' \
-                                --use_trained_model 
+python3 src/predict.py --user_input --k 5
 ```
-### Predict
+Detailed usage
 ```
 python3 src/predict.py  [--user_input] [--query QUERY] [--k K]
 
@@ -160,7 +200,24 @@ Arguments:
   QUERY - Specify query if user_input is not used
   K - Top-k answers to output
 ```
-#### Example - Predict with FinBERT-QA search
+
+### Generate data
+#### `src/generate_data.py`: creates pickle files of the training, validation, and test set
 ```
-python3 src/predict.py --user_input --k 5
+python3 src/generate_data.py --query_path data/raw/FiQA_train_question_final.tsv \
+                             --label_path data/raw/FiQA_train_question_doc_final.tsv
+```
+The data wil be stored in ```data/data_pickle```
+
+Detailed usage:
+```
+python3 src/generate_data.py [--query_path QUERY_PATH] [--label_path LABEL_PATH] \
+                             [--cands_size CANDS_SIZE] [--output_dir OUTPUT_DIR]
+
+Arguments:
+  QUERY_PATH - Path to the question id to text data in .tsv format. Each line should have at least two columns named (qid, question) separated by tab
+  LABEL_PATH - Path to the question id and answer id data in .tsv format. Each line should have at two columns named (qid, docid) separated by tab
+  CANDS_SIZE - Number of candidates to retrieve per question.
+  OUTPUT_DIR - The output directory where the generated data will be stored.
+                             
 ```
