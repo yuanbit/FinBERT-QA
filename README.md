@@ -29,11 +29,12 @@ This repo can be used as a container with [Docker](https://www.docker.com/). Thi
 
 #### Docker pull command
 ```
-docker pull yuanbit/finbert_qa:1.0
+docker pull yuanbit/finbert_qa:3.0
 ```
 #### Run
+Run with GPU. Remove the ```--runtime=nvidia``` if no GPU available
 ```
-docker run --runtime=nvidia -it yuanbit/finbert_qa
+docker run --runtime=nvidia -it yuanbit/finbert_qa:3.0
 ```
 ## Quickstart
 Run to query the top-k opinionated answers from the financial domain
