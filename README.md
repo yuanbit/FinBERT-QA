@@ -38,7 +38,7 @@ docker run --runtime=nvidia -it yuanbit/finbert_qa
 ## Quickstart
 Run to query the top-k opinionated answers from the financial domain
 ```
-python3 src/predict.py --user_input --k 5
+python3 src/predict.py --user_input --top_k 5
 ```
 Sample questions:
 ```
@@ -212,15 +212,17 @@ Arguments:
 #### `src/predict.py`: given a query, retrieves the top-50 candidate answers and re-ranks them with the FinBERT-QA model
 Retrieve the top-5 answers for a user given query
 ```
-python3 src/predict.py --user_input --k 5
+python3 src/predict.py --user_input --top_k 5
 ```
 Detailed usage
 ```
-python3 src/predict.py  [--user_input] [--query QUERY] [--k K]
+python3 src/predict.py  [--user_input] [--query QUERY] \
+                        [--top_k TOP_K] [--device DEVICE]
 
 Arguments:
   QUERY - Specify query if user_input is not used
-  K - Top-k answers to output
+  TOP_K - Top-k answers to output
+  DEVICE - Specify 'gpu' or 'cpu'
 ```
 
 ### Generate data
