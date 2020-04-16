@@ -23,7 +23,7 @@ def main():
 
     config = {'user_input': args.user_input,
               'query': args.query,
-              'top_k': args.k,
+              'top_k': args.top_k,
               'bert_model_name': 'bert-qa',
               'device': args.device,
               'max_seq_len': 512}
