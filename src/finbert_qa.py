@@ -925,7 +925,7 @@ class FinBERT_QA():
         self.model.eval()
 
         searcher = pysearch.SimpleSearcher(fiqa_index)
-        self.k = self.config['k']
+        self.k = self.config['top_k']
 
         if self.config['user_input'] == True:
             # Ask the user for a keyword query.
