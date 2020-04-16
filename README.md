@@ -32,7 +32,7 @@ This repo can be used as a container with [Docker](https://www.docker.com/). Thi
 docker pull yuanbit/finbert_qa:3.0
 ```
 #### Run
-Run with GPU. Remove ```--runtime=nvidia``` if no GPU available.
+Run with GPU.
 ```
 docker run --runtime=nvidia -it yuanbit/finbert_qa:3.0
 ```
