@@ -25,7 +25,7 @@ The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results w
 If no GPU is available, an alternative and low-effort way to train and evaluate a model as well as predicting the results is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
 
 ### With Docker
-This repo can be used as a container with [Docker](https://www.docker.com/). This is does not require or use a locally checked out copy of FinBERT-QA. Run the commands as root if Docker is not configured.
+This repo can be used as a container with [Docker](https://www.docker.com/). This is does not require a locally checked out copy of FinBERT-QA. Run the commands as root if Docker is not configured.
 
 #### Docker pull command
 ```
