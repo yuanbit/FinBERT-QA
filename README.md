@@ -5,7 +5,7 @@ The system uses techniques from both information retrieval and natural language 
 
 Built using Huggingface's [transformers](https://github.com/huggingface/transformers) library and the transfer and adapt [[TANDA](https://arxiv.org/pdf/1911.04118.pdf)] method, FinBERT-QA first transfers and fine-tunes a pre-trained BERT model to a general QA task, then adapts this model to the financial domain using the FiQA dataset. The transfer step uses the fine-tuned BERT model on the [MS MACRO Passage Retrieval](https://microsoft.github.io/msmarco/) dataset from [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf), where it was converted from a TensorFlow to PyTorch model.
 
-The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results were improved by an average of ~20% on three ranking evaluation metrics.
+The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results were improved by an average of ~20% on three ranking evaluation metrics (nDCG, MRR, Precision).
 
 ## Contents
 * [Installation](#installation)
