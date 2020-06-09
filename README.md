@@ -3,9 +3,9 @@ FinBERT-QA is a Question Answering system for retrieving opinionated financial p
 
 The system uses techniques from both information retrieval and natural language processing by first retrieving the top-50 answer candidates of each query using the Lucene toolkit, [Anserini](https://github.com/castorini/anserini), then re-ranking the answer candidates using variants of pre-trained [BERT](https://arxiv.org/pdf/1810.04805.pdf) models. 
 
-Built using Huggingface's [transformers](https://github.com/huggingface/transformers) library and the transfer and adapt [[TANDA](https://arxiv.org/pdf/1911.04118.pdf)] method, FinBERT-QA first transfers and fine-tunes a pre-trained BERT model to a general QA task, then adapts this model to the financial domain using the FiQA dataset. The transfer step uses the fine-tuned BERT model on the [MS MACRO Passage Retrieval](https://microsoft.github.io/msmarco/) dataset from [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf), where it was converted from a TensorFlow to PyTorch model.
+Built from Huggingface's [transformers](https://github.com/huggingface/transformers) library and the transfer and adapt [[TANDA](https://arxiv.org/pdf/1911.04118.pdf)] method, FinBERT-QA first transfers and fine tunes a pre-trained BERT model to a general QA task, then adapts this model to the financial domain using the FiQA dataset. The transfer step uses the fine-tuned BERT model on the [MS MACRO Passage Retrieval](https://microsoft.github.io/msmarco/) dataset from [Nogueira et al.](https://arxiv.org/pdf/1901.04085.pdf), where it was converted from a TensorFlow to a PyTorch model.
 
-The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results were improved by an average of ~20% on three ranking evaluation metrics.
+The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results were improved by an average of ~20% on three ranking evaluation metrics (nDCG, MRR, Precision).
 
 ## Contents
 * [Installation](#installation)
@@ -22,17 +22,17 @@ The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results w
 * [Contact](#contact)
 
 ## Installation
-If no GPU is available, an alternative and low-effort way to train and evaluate a model as well as predicting the results is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
+If no GPU is available, an alternative and low-effort way to train and evaluate the models as well as predicting the results is through the following [online notebooks](https://github.com/yuanbit/FinBERT-QA-notebooks) using Colab.
 
 ### With Docker
-This repo can be used as a container with [Docker](https://www.docker.com/). This is does not require or use a locally checked out copy of FinBERT-QA. Run the commands as root if Docker is not configured.
+This repo can be used as a container with [Docker](https://www.docker.com/). This is does not require a locally checked out copy of FinBERT-QA. Run the commands as root if Docker is not configured.
 
 #### Docker pull command
 ```
 docker pull yuanbit/finbert_qa:3.0
 ```
 #### Run
-Run with GPU. Remove ```--runtime=nvidia``` if no GPU available.
+Run with GPU.
 ```
 docker run --runtime=nvidia -it yuanbit/finbert_qa:3.0
 ```
@@ -63,7 +63,7 @@ git clone https://github.com/castorini/anserini.git
 sh indexer.sh
 ```
 ## Dataset
-The [raw dataset](https://sites.google.com/view/fiqa) has been cleaned and split into training, validation, and test sets in the form of lists where each sample is a list of ```[question id, [label answer ids], [answer candidate ids]]```. The datasets are stored in the pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see [Generate data](#generate-data). ```data/data_pickle``` is a pickle file consisting of a python dictionary where the keys are the question ids and the values are lists of relevant answer ids.
+The [raw dataset](https://sites.google.com/view/fiqa) has been cleaned and split into training, validation, and test sets in the form of lists where each sample is a list of ```[question id, [label answer ids], [answer candidate ids]]```. The datasets are stored in the pickle files in ```data/data_pickle```. The generation of the datasets can be replicated by running the ```src/generate_data.py``` script, more details please see [Generate data](#generate-data). ```data/data_pickle/labels.pickle``` is a pickle file consisting of a python dictionary where the keys are the question ids and the values are lists of relevant answer ids.
 
 Since creating inputs to fine-tune a pre-trained BERT model can take some time, sample datasets are provided in ```data/sample/``` for testing.
 
