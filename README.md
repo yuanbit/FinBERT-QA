@@ -9,6 +9,8 @@ The [state-of-the-art](https://dl.acm.org/doi/10.1145/3184558.3191830) results w
 
 ![alt text](https://github.com/yuanbit/FinBERT-QA/blob/master/img/QA_pipeline.png?raw=true)
 
+```Overview of the QA pipeline. The Anserini Answer Retriever first retrieves the top 50 candidate answers, then the Answer Re-ranker outputs the top 10 most relevant answers. The Answer Re-ranker uses the FinBERT-QA model, which was constructed by first transferring a pre-trained BERT model to the large-scale MS MACRO dataset, then adapting the transfered model to target FiQA dataset```
+
 ## Contents
 * [Installation](#installation)
 * [Quickstart](#quickstart)
