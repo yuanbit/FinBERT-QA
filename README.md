@@ -1,5 +1,5 @@
 # FinBERT-QA: Financial Question Answering using BERT
-FinBERT-QA is a Question Answering system for retrieving opinionated financial passages from task 2 of the [FiQA](https://sites.google.com/view/fiqa) dataset. 
+FinBERT-QA is a Question Answering system for retrieving opinionated financial passages from task 2 of the [FiQA](https://sites.google.com/view/fiqa) dataset. Please see [FinBERT-QA: Financial Question Answering with pre-trained BERT Language Models](https://drive.google.com/file/d/1UyB9Ch9H1WnxW4WQgGWEoB-tAV1FMsf9/view?usp=sharing) for further information.
 
 The system uses techniques from both information retrieval and natural language processing by first retrieving the top-50 answer candidates of each query using the Lucene toolkit, [Anserini](https://github.com/castorini/anserini), then re-ranking the answer candidates using variants of pre-trained [BERT](https://arxiv.org/pdf/1810.04805.pdf) models. 
 
