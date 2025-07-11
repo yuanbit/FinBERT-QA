@@ -277,5 +277,3 @@ Arguments:
     │   └── utils.py                  # Helper functions
     └── ...
  
-## Contact
-```[Bithiah Yuan](bithiahy[at]gmail.com)```
